@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101812" />
+  <meta name="description" content="Панель управления университетским проектом" />
+  <title>Project Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">P</span><span>PROJECT<br><b>CONTROL CENTER</b></span></div>
+      <div class="sidebar-label">WORKSPACE</div>
+      <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span> Обзор проекта</button>
+      <button class="nav-item" data-page="problems"><span class="nav-icon">◈</span> Проблемы и решения</button>
+      <div class="sidebar-bottom">
+        <div class="sidebar-label">ДОСТУП</div>
+        <div id="access-state" class="access-state"><span class="status-dot"></span> Демо-режим · только это устройство</div>
+        <button id="login-btn" class="btn btn-outline btn-full">Войти для синхронизации</button>
+        <button id="logout-btn" class="btn btn-outline btn-full hidden">Выйти</button>
+        <p class="sidebar-note">Публичный просмотр. Изменение общих данных — после входа.</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">UNIVERSITY PROJECT / CONTROL ROOM</div>
+          <h1 id="project-title">Project Alpha</h1>
+          <p id="project-subtitle" class="muted">Единая панель прогресса, команд и результатов</p>
+        </div>
+        <div class="top-actions">
+          <span id="mode-pill" class="mode-pill">DEMO</span>
+          <button id="edit-project-btn" class="btn btn-primary">Настройки проекта</button>
+        </div>
+      </header>
+
+      <div class="page-tabs mobile-tabs">
+        <button class="tab active" data-page="overview">Обзор</button>
+        <button class="tab" data-page="problems">Проблемы и решения</button>
+      </div>
+
+      <section id="page-overview" class="page active">
+        <section class="overview-grid">
+          <article class="panel task-kpi-panel">
+            <div class="panel-heading"><div><div class="eyebrow">TASK ANALYTICS</div><h2>KPI рабочих задач</h2></div><span class="panel-icon">◔</span></div>
+            <div class="task-donut-wrap">
+              <div id="task-donut" class="task-donut"><div class="donut-hole"><strong id="task-total">0</strong><span>всего задач</span></div></div>
+              <div id="task-legend" class="legend"></div>
+            </div>
+            <div class="mini-stats">
+              <div><span class="mini-label">Выполнено</span><b id="done-count">0</b></div>
+              <div><span class="mini-label">В работе</span><b id="progress-count">0</b></div>
+              <div><span class="mini-label">Не начато</span><b id="todo-count">0</b></div>
+            </div>
+          </article>
+
+          <article class="panel progress-panel">
+            <div class="panel-heading"><div><div class="eyebrow">PROJECT STATUS</div><h2>Прогресс проекта</h2></div><button id="edit-progress-btn" class="icon-button" title="Изменить способ расчёта">•••</button></div>
+            <div class="progress-main"><strong id="overall-percent">0%</strong><span id="progress-caption">по выполненным задачам</span></div>
+            <div class="progress-track"><div id="overall-bar" class="progress-fill"></div></div>
+            <div class="progress-meta"><span id="overall-completed">0 выполнено</span><span id="overall-remaining">0 осталось</span></div>
+            <div class="team-heading"><div><div class="eyebrow">TEAM CONTRIBUTION</div><h3>Вклад участников по группам</h3></div><span class="hint">Нажмите на группу</span></div>
+            <div id="team-circles" class="team-circles"></div>
+          </article>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel members-panel">
+            <div class="panel-heading"><div><div class="eyebrow">PEOPLE & ROLES</div><h2>Участники и руководители</h2><p class="panel-subtitle">Состав команды и распределение по группам</p></div><button id="add-member-btn" class="btn btn-primary btn-small">＋ Добавить</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Участник</th><th>Группа</th><th>Роль</th><th></th></tr></thead><tbody id="members-table"></tbody></table></div>
+            <div class="panel-footer"><span id="member-count">0 участников</span><button id="add-team-btn" class="text-button">＋ Добавить группу</button></div>
+          </article>
+          <article class="panel activity-panel">
+            <div class="panel-heading"><div><div class="eyebrow">LIVE PROJECT FEED</div><h2>Последняя активность</h2></div><span class="live-indicator"><i></i> LIVE</span></div>
+            <div id="activity-list" class="activity-list"></div>
+          </article>
+        </section>
+
+        <section class="panel tasks-panel">
+          <div class="panel-heading"><div><div class="eyebrow">TASK MANAGEMENT</div><h2>Рабочие задачи</h2><p class="panel-subtitle">Статус, ответственный участник и срок выполнения</p></div><button id="add-task-btn" class="btn btn-primary btn-small">＋ Новая задача</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Задача</th><th>Группа</th><th>Ответственный</th><th>Срок</th><th>Статус</th><th></th></tr></thead><tbody id="tasks-table"></tbody></table></div>
+        </section>
+      </section>
+
+      <section id="page-problems" class="page">
+        <div class="page-intro"><div><div class="eyebrow">CONTINUOUS IMPROVEMENT</div><h2>Проблемы и оптимизация</h2><p class="muted">Фиксируйте препятствия, ответственных и фактический результат решений.</p></div><button id="add-issue-btn" class="btn btn-primary">＋ Добавить проблему</button></div>
+        <div class="issue-summary" id="issue-summary"></div>
+        <div class="issue-columns"><div class="issue-col"><div class="column-title"><span class="column-dot open"></span><h3>Проблемы</h3><span id="open-issue-count" class="count-pill">0</span></div><div id="open-issues" class="issue-list"></div></div><div class="solution-col"><div class="column-title"><span class="column-dot solved"></span><h3>Оптимизировано</h3><span id="solved-issue-count" class="count-pill">0</span></div><div id="solved-issues" class="issue-list"></div></div></div>
+      </section>
+
+      <footer class="footer"><span>PROJECT CONTROL CENTER</span><span id="last-saved">Данные этого браузера</span></footer>
+    </main>
+  </div>
+
+  <dialog id="editor-dialog" class="editor-dialog"><form id="editor-form" method="dialog"><div class="dialog-head"><div><div id="dialog-eyebrow" class="eyebrow">EDIT DATA</div><h2 id="dialog-title">Редактирование</h2></div><button type="button" id="dialog-close" class="icon-button">✕</button></div><div id="dialog-fields" class="dialog-fields"></div><div class="dialog-actions"><button type="button" id="dialog-cancel" class="btn btn-outline">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div></form></dialog>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
