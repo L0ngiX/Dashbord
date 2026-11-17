@@ -4,6 +4,6 @@
  * Пока поля пустые, приложение работает в демо-режиме и хранит данные только в localStorage.
  */
 window.APP_CONFIG = {
-  supabaseUrl: "123",
-  supabaseAnonKey: "123"
+  supabaseUrl: "https://whxqtugtwyjrpsjhxrzo.supabase.co",
+  supabaseAnonKey: "sb_publishable_yYSgE2YbEJor6h8M69uMGA_Yomw_gIp"
 };
