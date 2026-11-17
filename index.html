@@ -72,7 +72,7 @@
 
         <section class="lower-grid">
           <article class="panel members-panel">
-            <div class="panel-heading"><div><div class="eyebrow">PEOPLE & ROLES</div><h2>Участники и руководители</h2><p class="panel-subtitle">Состав команды и распределение по группам</p></div><button id="add-member-btn" class="btn btn-primary btn-small">＋ Добавить</button></div>
+            <div class="panel-heading"><div><div class="eyebrow">PEOPLE & ROLES</div><h2>Участники и руководители</h2><p class="panel-subtitle">Состав команды и начисленные баллы участников</p></div><button id="add-member-btn" class="btn btn-primary btn-small">＋ Добавить</button></div>
             <div class="member-filters">
               <label class="member-team-filter"><span>Подгруппа</span><select id="member-team-filter" aria-label="Фильтр по подгруппе"><option value="all">Все группы</option></select></label>
               <div id="member-role-filters" class="member-role-filters" role="group" aria-label="Фильтр по роли">
@@ -81,7 +81,7 @@
                 <button type="button" class="member-filter-tab" data-member-role-filter="Member">Участники</button>
               </div>
             </div>
-            <div class="members-list-scroll"><div class="table-wrap"><table><thead><tr><th>Участник</th><th>Группа</th><th>Роль</th><th></th></tr></thead><tbody id="members-table"></tbody></table></div></div>
+            <div class="members-list-scroll"><div class="table-wrap"><table><thead><tr><th>Участник</th><th>Группа</th><th>Роль</th><th>Баллы · заработано / назначено</th><th></th></tr></thead><tbody id="members-table"></tbody></table></div></div>
             <div class="panel-footer"><span id="member-count">0 участников</span><button id="add-team-btn" class="text-button">＋ Добавить группу</button></div>
           </article>
           <article class="panel activity-panel">
@@ -91,8 +91,8 @@
         </section>
 
         <section class="panel tasks-panel">
-          <div class="panel-heading"><div><div class="eyebrow">TASK MANAGEMENT</div><h2>Рабочие задачи</h2><p class="panel-subtitle">Статус, ответственный участник и срок выполнения</p></div><button id="add-task-btn" class="btn btn-primary btn-small">＋ Новая задача</button></div>
-          <div class="tasks-table-scroll"><div class="table-wrap"><table><thead><tr><th>Задача</th><th>Группа</th><th>Ответственный</th><th>Срок</th><th>Статус</th><th></th></tr></thead><tbody id="tasks-table"></tbody></table></div></div>
+          <div class="panel-heading"><div><div class="eyebrow">TASK MANAGEMENT</div><h2>Рабочие задачи</h2><p class="panel-subtitle">Несколько исполнителей из разных групп, вес и распределение баллов</p></div><button id="add-task-btn" class="btn btn-primary btn-small">＋ Новая задача</button></div>
+          <div class="tasks-table-scroll"><div class="table-wrap"><table><thead><tr><th>Задача</th><th>Исполнители</th><th>Вес</th><th>Начислено · заработано / всего</th><th>Срок</th><th>Статус</th><th></th></tr></thead><tbody id="tasks-table"></tbody></table></div></div>
         </section>
       </section>
 
