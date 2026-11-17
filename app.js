@@ -57,6 +57,8 @@ let currentUser = null;
 let profile = null;
 let activePage = 'overview';
 let editingContext = null;
+let memberTeamFilter = 'all';
+let memberRoleFilter = 'all';
 
 const config = window.APP_CONFIG || {};
 const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey);
@@ -243,8 +245,27 @@ function renderTeams() {
   }).join('') || '<div class="empty-state">Добавьте первую подгруппу, чтобы увидеть статистику.</div>';
 }
 function renderMembers() {
-  $('#member-count').textContent=`${state.members.length} участников`;
-  $('#members-table').innerHTML=state.members.map(m=>`<tr><td><div class="person-cell"><span class="avatar">${safe(m.name.split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${safe(m.name)}</b></div></td><td>${safe(teamName(m.teamId))}</td><td><span class="role-pill ${m.role==='Leader'?'leader':''}">${m.role==='Leader'?'Руководитель':'Участник'}</span></td><td><div class="row-actions ${canManage(m.teamId)?'':'hidden'}"><button class="small-action" data-edit="member" data-id="${safe(m.id)}" title="Изменить">✎</button><button class="small-action danger" data-delete="member" data-id="${safe(m.id)}" title="Удалить">×</button></div></td></tr>`).join('') || '<tr><td colspan="4" class="empty-cell">Пока нет участников. Добавьте первого.</td></tr>';
+  const teamSelect=$('#member-team-filter');
+  const validTeamFilter=memberTeamFilter==='all'||state.teams.some(t=>t.id===memberTeamFilter);
+  if(!validTeamFilter) memberTeamFilter='all';
+  teamSelect.innerHTML='<option value="all">Все группы</option>'+state.teams.map(t=>`<option value="${safe(t.id)}">${safe(t.name)}</option>`).join('');
+  teamSelect.value=memberTeamFilter;
+  $$('#member-role-filters [data-member-role-filter]').forEach(button=>button.classList.toggle('active',button.dataset.memberRoleFilter===memberRoleFilter));
+
+  const teamOrder=new Map(state.teams.map((team,index)=>[team.id,index]));
+  const visibleMembers=state.members
+    .filter(m=>memberTeamFilter==='all'||m.teamId===memberTeamFilter)
+    .filter(m=>memberRoleFilter==='all'||m.role===memberRoleFilter)
+    .sort((a,b)=>{
+      const groupDifference=(teamOrder.get(a.teamId)??Number.MAX_SAFE_INTEGER)-(teamOrder.get(b.teamId)??Number.MAX_SAFE_INTEGER);
+      if(groupDifference!==0) return groupDifference;
+      const leaderDifference=(b.role==='Leader'?1:0)-(a.role==='Leader'?1:0);
+      if(leaderDifference!==0) return leaderDifference;
+      return a.name.localeCompare(b.name,'ru',{sensitivity:'base'});
+    });
+
+  $('#member-count').textContent=`Показано ${visibleMembers.length} из ${state.members.length}`;
+  $('#members-table').innerHTML=visibleMembers.map(m=>`<tr><td><div class="person-cell"><span class="avatar">${safe(m.name.split(/\s+/).map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${safe(m.name)}</b></div></td><td>${safe(teamName(m.teamId))}</td><td><span class="role-pill ${m.role==='Leader'?'leader':''}">${m.role==='Leader'?'Руководитель':'Участник'}</span></td><td><div class="row-actions ${canManage(m.teamId)?'':'hidden'}"><button class="small-action" data-edit="member" data-id="${safe(m.id)}" title="Изменить">✎</button><button class="small-action danger" data-delete="member" data-id="${safe(m.id)}" title="Удалить">×</button></div></td></tr>`).join('') || `<tr><td colspan="4" class="empty-cell">${state.members.length?'В этой категории пока никого нет.':'Пока нет участников. Добавьте первого.'}</td></tr>`;
 }
 const statusLabel={Done:'Выполнено','In Progress':'В процессе','To Do':'Не начато'};
 function renderTasks() {
@@ -345,6 +366,8 @@ $('#add-team-btn').addEventListener('click',()=>openEditor('team'));
 $('#add-member-btn').addEventListener('click',()=>openEditor('member'));
 $('#add-task-btn').addEventListener('click',()=>openEditor('task'));
 $('#add-issue-btn').addEventListener('click',()=>openEditor('issue'));
+$('#member-team-filter').addEventListener('change',e=>{memberTeamFilter=e.target.value;renderMembers();renderAccess();});
+$('#member-role-filters').addEventListener('click',e=>{const button=e.target.closest('[data-member-role-filter]');if(!button)return;memberRoleFilter=button.dataset.memberRoleFilter;renderMembers();renderAccess();});
 $('#login-btn').addEventListener('click',()=>configured&&supabase?openLogin():toast('Сначала подключите проект Supabase в config.js и выполните SQL из папки supabase.',true));
 $('#logout-btn').addEventListener('click',async()=>{if(supabase)await supabase.auth.signOut();});
 

@@ -3,3 +3,254 @@
 @media(max-width:1160px){.overview-grid{grid-template-columns:1fr}.task-kpi-panel .task-donut-wrap{padding:18px 5px}.lower-grid{grid-template-columns:1fr}.team-circles{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:760px){.app-shell{display:block}.sidebar{position:relative;height:auto;min-height:0;padding:14px 16px;border-right:0;border-bottom:1px solid var(--border)}.brand{padding:0 4px 14px}.sidebar>.sidebar-label,.sidebar>.nav-item,.sidebar-bottom{display:none}.main-content{padding:22px 14px}.topbar{display:block}.top-actions{padding-top:15px;justify-content:space-between}.mobile-tabs{display:flex;gap:8px;margin:-8px 0 18px}.tab{flex:1;padding:9px;border:1px solid var(--border);background:#121a14;color:var(--muted);border-radius:9px;font-weight:700;font-size:10px}.tab.active{border-color:#789b2c;color:var(--accent);background:#b5ef2310}.page-intro{align-items:flex-start;flex-direction:column}.page-intro h2{font-size:22px}.overview-grid{display:block}.task-kpi-panel{margin-bottom:13px}.team-circles{grid-template-columns:repeat(2,minmax(0,1fr))}.team-card{padding:12px}.team-card-main{padding:0}.lower-grid{display:block}.activity-panel{margin-top:13px}.panel{padding:16px}.task-donut{width:125px;height:125px;min-width:125px}.task-donut-wrap{gap:16px}.issue-columns{grid-template-columns:1fr}.issue-summary{gap:7px}.summary-tile{padding:12px;display:block}.summary-tile b{display:block;margin-top:8px}.tasks-panel{padding:14px}.footer{font-size:7px}.sidebar{display:block}.access-state,.sidebar-bottom{display:none}.members-panel .panel-heading{align-items:center}.members-panel .panel-heading h2{font-size:15px}}
 @media(max-width:420px){.task-donut-wrap{align-items:flex-start;flex-direction:column}.legend{width:100%;grid-template-columns:repeat(3,1fr);gap:6px}.legend>div{grid-template-columns:8px 1fr;gap:4px}.legend b{grid-column:2}.mini-label{font-size:8px}.panel-heading h2{font-size:16px}.topbar h1{font-size:27px}.mode-pill{font-size:8px}.btn{padding:9px 10px}.team-ring{width:68px;height:68px}}
+
+/* Bounded content areas: panels keep their size while long lists scroll inside. */
+.members-panel,
+.activity-panel {
+  height: 440px;
+  max-height: 440px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.members-panel > .panel-heading,
+.activity-panel > .panel-heading,
+.tasks-panel > .panel-heading {
+  flex: 0 0 auto;
+}
+
+.member-filters {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.member-team-filter {
+  display: grid;
+  gap: 5px;
+  min-width: 120px;
+  flex: 1 1 150px;
+}
+
+.member-team-filter span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.member-team-filter select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text);
+  background: #0e1510;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  font-size: 10px;
+}
+
+.member-team-filter select:focus {
+  border-color: var(--accent);
+}
+
+.member-role-filters {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0e1510;
+  flex: 0 0 auto;
+}
+
+.member-filter-tab {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.member-filter-tab:hover,
+.member-filter-tab.active {
+  color: var(--accent);
+  background: #b5ef2312;
+}
+
+.members-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  margin-top: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.members-list-scroll .table-wrap {
+  margin-top: 0;
+  overflow: visible;
+}
+
+.members-list-scroll thead th,
+.tasks-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+}
+
+.members-panel .panel-footer {
+  flex: 0 0 auto;
+  margin-top: 9px;
+}
+
+.activity-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 8px 4px 2px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.tasks-panel {
+  height: 430px;
+  max-height: 430px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tasks-table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  margin-top: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.tasks-table-scroll .table-wrap {
+  margin-top: 0;
+  overflow: visible;
+}
+
+.issue-list-scroll {
+  max-height: min(64vh, 620px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 7px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* Group cards stay in one horizontal rail instead of wrapping to a new row. */
+.team-circles {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 10px;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
+.team-card {
+  flex: 0 0 calc((100% - 30px) / 4);
+  min-width: 138px;
+  scroll-snap-align: start;
+}
+
+.contribution-list {
+  max-height: 66px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-content: flex-start;
+  padding-right: 2px;
+}
+
+.members-list-scroll::-webkit-scrollbar,
+.activity-list::-webkit-scrollbar,
+.tasks-table-scroll::-webkit-scrollbar,
+.issue-list-scroll::-webkit-scrollbar,
+.team-circles::-webkit-scrollbar,
+.contribution-list::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.members-list-scroll::-webkit-scrollbar-thumb,
+.activity-list::-webkit-scrollbar-thumb,
+.tasks-table-scroll::-webkit-scrollbar-thumb,
+.issue-list-scroll::-webkit-scrollbar-thumb,
+.team-circles::-webkit-scrollbar-thumb,
+.contribution-list::-webkit-scrollbar-thumb {
+  background: #425044;
+  border-radius: 8px;
+}
+
+.members-list-scroll::-webkit-scrollbar-track,
+.activity-list::-webkit-scrollbar-track,
+.tasks-table-scroll::-webkit-scrollbar-track,
+.issue-list-scroll::-webkit-scrollbar-track,
+.team-circles::-webkit-scrollbar-track,
+.contribution-list::-webkit-scrollbar-track {
+  background: #111912;
+  border-radius: 8px;
+}
+
+@media (max-width: 760px) {
+  .members-panel,
+  .activity-panel {
+    height: 420px;
+    max-height: 420px;
+  }
+
+  .tasks-panel {
+    height: 410px;
+    max-height: 410px;
+  }
+
+  .team-card {
+    flex-basis: 145px;
+    min-width: 145px;
+  }
+
+  .member-filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .member-team-filter {
+    flex-basis: auto;
+  }
+
+  .member-role-filters {
+    width: 100%;
+  }
+
+  .member-filter-tab {
+    flex: 1 1 0;
+  }
+
+  .issue-list-scroll {
+    max-height: 420px;
+  }
+}

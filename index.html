@@ -73,7 +73,15 @@
         <section class="lower-grid">
           <article class="panel members-panel">
             <div class="panel-heading"><div><div class="eyebrow">PEOPLE & ROLES</div><h2>Участники и руководители</h2><p class="panel-subtitle">Состав команды и распределение по группам</p></div><button id="add-member-btn" class="btn btn-primary btn-small">＋ Добавить</button></div>
-            <div class="table-wrap"><table><thead><tr><th>Участник</th><th>Группа</th><th>Роль</th><th></th></tr></thead><tbody id="members-table"></tbody></table></div>
+            <div class="member-filters">
+              <label class="member-team-filter"><span>Подгруппа</span><select id="member-team-filter" aria-label="Фильтр по подгруппе"><option value="all">Все группы</option></select></label>
+              <div id="member-role-filters" class="member-role-filters" role="group" aria-label="Фильтр по роли">
+                <button type="button" class="member-filter-tab active" data-member-role-filter="all">Все</button>
+                <button type="button" class="member-filter-tab" data-member-role-filter="Leader">Руководители</button>
+                <button type="button" class="member-filter-tab" data-member-role-filter="Member">Участники</button>
+              </div>
+            </div>
+            <div class="members-list-scroll"><div class="table-wrap"><table><thead><tr><th>Участник</th><th>Группа</th><th>Роль</th><th></th></tr></thead><tbody id="members-table"></tbody></table></div></div>
             <div class="panel-footer"><span id="member-count">0 участников</span><button id="add-team-btn" class="text-button">＋ Добавить группу</button></div>
           </article>
           <article class="panel activity-panel">
@@ -84,14 +92,14 @@
 
         <section class="panel tasks-panel">
           <div class="panel-heading"><div><div class="eyebrow">TASK MANAGEMENT</div><h2>Рабочие задачи</h2><p class="panel-subtitle">Статус, ответственный участник и срок выполнения</p></div><button id="add-task-btn" class="btn btn-primary btn-small">＋ Новая задача</button></div>
-          <div class="table-wrap"><table><thead><tr><th>Задача</th><th>Группа</th><th>Ответственный</th><th>Срок</th><th>Статус</th><th></th></tr></thead><tbody id="tasks-table"></tbody></table></div>
+          <div class="tasks-table-scroll"><div class="table-wrap"><table><thead><tr><th>Задача</th><th>Группа</th><th>Ответственный</th><th>Срок</th><th>Статус</th><th></th></tr></thead><tbody id="tasks-table"></tbody></table></div></div>
         </section>
       </section>
 
       <section id="page-problems" class="page">
         <div class="page-intro"><div><div class="eyebrow">CONTINUOUS IMPROVEMENT</div><h2>Проблемы и оптимизация</h2><p class="muted">Фиксируйте препятствия, ответственных и фактический результат решений.</p></div><button id="add-issue-btn" class="btn btn-primary">＋ Добавить проблему</button></div>
         <div class="issue-summary" id="issue-summary"></div>
-        <div class="issue-columns"><div class="issue-col"><div class="column-title"><span class="column-dot open"></span><h3>Проблемы</h3><span id="open-issue-count" class="count-pill">0</span></div><div id="open-issues" class="issue-list"></div></div><div class="solution-col"><div class="column-title"><span class="column-dot solved"></span><h3>Оптимизировано</h3><span id="solved-issue-count" class="count-pill">0</span></div><div id="solved-issues" class="issue-list"></div></div></div>
+        <div class="issue-columns"><div class="issue-col"><div class="column-title"><span class="column-dot open"></span><h3>Проблемы</h3><span id="open-issue-count" class="count-pill">0</span></div><div id="open-issues" class="issue-list issue-list-scroll"></div></div><div class="solution-col"><div class="column-title"><span class="column-dot solved"></span><h3>Оптимизировано</h3><span id="solved-issue-count" class="count-pill">0</span></div><div id="solved-issues" class="issue-list issue-list-scroll"></div></div></div>
       </section>
 
       <footer class="footer"><span>PROJECT CONTROL CENTER</span><span id="last-saved">Данные этого браузера</span></footer>
