@@ -17,18 +17,31 @@
       <div class="brand"><span class="brand-mark">Т</span><span>ТУРГЕНЕВСКИЙ<br><b>ДОМ · ЦИФРОВОЙ ПАСПОРТ</b></span></div>
       <div class="sidebar-label">МУЗЕЙ</div>
       <button class="nav-item active" data-page="public"><span class="nav-icon">⌂</span> О здании</button>
-      <div class="sidebar-label role-nav-label" data-roles="owner,design,maintenance">СПЕЦИАЛЬНЫЕ РАЗДЕЛЫ</div>
-      <button class="nav-item role-nav" data-page="design" data-roles="owner,design"><span class="nav-icon">⌗</span> Архитектура и чертежи</button>
-      <button class="nav-item role-nav" data-page="maintenance" data-roles="owner,maintenance"><span class="nav-icon">⚒</span> Состояние и эксплуатация</button>
-      <div class="sidebar-label owner-nav-label" data-roles="owner">УПРАВЛЕНИЕ</div>
-      <button class="nav-item" data-page="overview" data-roles="owner"><span class="nav-icon">▦</span> Командный проект</button>
-      <button class="nav-item" data-page="problems" data-roles="owner"><span class="nav-icon">◈</span> Проектные проблемы</button>
+      <div class="sidebar-label role-nav-label" data-nav-group="specialists">СПЕЦИАЛЬНЫЕ РАЗДЕЛЫ</div>
+      <button class="nav-item role-nav" data-page="design"><span class="nav-icon">⌗</span> Архитектура и чертежи</button>
+      <button class="nav-item role-nav" data-page="maintenance"><span class="nav-icon">⚒</span> Состояние и эксплуатация</button>
+      <div class="sidebar-label owner-nav-label" data-nav-group="owner">УПРАВЛЕНИЕ</div>
+      <button class="nav-item" data-page="overview"><span class="nav-icon">▦</span> Командный проект</button>
+      <button class="nav-item" data-page="problems"><span class="nav-icon">◈</span> Проектные проблемы</button>
       <div class="sidebar-bottom">
-        <div class="sidebar-label">ДОСТУП</div>
-        <div id="access-state" class="access-state"><span class="status-dot"></span> Демо-режим · только это устройство</div>
-        <button id="login-btn" class="btn btn-outline btn-full">Войти для синхронизации</button>
-        <button id="logout-btn" class="btn btn-outline btn-full hidden">Выйти</button>
-        <p class="sidebar-note">Публичный просмотр. Изменение общих данных — после входа.</p>
+        <div id="preview-role-wrap" class="preview-role-wrap hidden">
+          <div class="sidebar-label">ТЕСТОВЫЙ ПРОФИЛЬ</div>
+          <label class="preview-control" for="preview-role-select">
+            <span>Посмотреть сайт от лица</span>
+            <select id="preview-role-select" aria-label="Выбрать тестовый профиль">
+              <option value="visitor">Посетитель</option>
+              <option value="design">Архитекторы / дизайнеры</option>
+              <option value="maintenance">Эксплуатация и ремонт</option>
+              <option value="owner">Собственник</option>
+              <option value="admin" hidden>Администратор · полный режим</option>
+            </select>
+          </label>
+          <p class="sidebar-note preview-note">Тестовые профили меняют только отображение интерфейса. Они не являются аккаунтами и не дают права редактирования.</p>
+        </div>
+        <div class="sidebar-label access-label">УПРАВЛЕНИЕ ДОСТУПОМ</div>
+        <div id="access-state" class="access-state"><span class="status-dot public"></span> Публичный просмотр · только чтение</div>
+        <button id="login-btn" class="btn btn-outline btn-full">Войти как администратор</button>
+        <button id="logout-btn" class="btn btn-outline btn-full hidden">Выйти из аккаунта</button>
       </div>
     </aside>
 
@@ -43,16 +56,16 @@
           <span id="role-pill" class="role-context hidden"></span>
           <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему" title="Переключить тему">☾</button>
           <span id="mode-pill" class="mode-pill">DEMO</span>
-          <button id="edit-project-btn" class="btn btn-primary">Настройки проекта</button>
+          <button id="edit-project-btn" class="btn btn-primary hidden">Настройки проекта</button>
         </div>
       </header>
 
-      <div class="page-tabs mobile-tabs">
+      <div class="page-tabs mobile-tabs" aria-label="Разделы сайта">
         <button class="tab active" data-page="public">О здании</button>
-        <button class="tab" data-page="design" data-roles="owner,design">Чертежи</button>
-        <button class="tab" data-page="maintenance" data-roles="owner,maintenance">Эксплуатация</button>
-        <button class="tab" data-page="overview" data-roles="owner">Проект</button>
-        <button class="tab" data-page="problems" data-roles="owner">Проблемы</button>
+        <button class="tab" data-page="design">Чертежи</button>
+        <button class="tab" data-page="maintenance">Эксплуатация</button>
+        <button class="tab" data-page="overview">Проект</button>
+        <button class="tab" data-page="problems">Проблемы</button>
       </div>
 
       <section id="page-public" class="page active public-page">
@@ -89,7 +102,7 @@
         <section class="museum-source-strip"><div><b>Материалы и исторические сведения</b><span>Государственный музей А. С. Пушкина · mos.ru · «Узнай Москву»</span></div><a href="https://www.mos.ru/news/item/105446073/" target="_blank" rel="noopener">История дома на mos.ru ↗</a></section>
       </section>
 
-      <section id="page-design" class="page specialist-page">
+      <section id="page-design" hidden class="page specialist-page">
         <div class="page-intro"><div><div class="eyebrow">DESIGN STUDIO · DIGITAL BUILDING PASSPORT</div><h2>Архитектура и проектные материалы</h2><p class="muted">Подтверждённые параметры, схематические материалы и пространство для обмеров команды.</p></div><button id="add-measurement-btn" class="btn btn-primary btn-small">＋ Добавить замер</button></div>
         <div class="design-warning"><b>Важно для проектирования:</b> схема ниже — габаритная иллюстрация, а не рабочий поэтажный чертёж. Реальная планировка помещений, отметки и узлы должны подтверждаться обмерами и проектной документацией.</div>
         <div class="design-top-grid">
@@ -104,7 +117,7 @@
         <section class="gallery-section design-gallery"><div class="section-head"><div><div class="eyebrow">REFERENCE PHOTOGRAPHS</div><h2>Фотофиксация объекта</h2><p>Доступные внешние и интерьерные виды. Отсутствующие ракурсы нужно дознять.</p></div></div><div class="museum-gallery compact-gallery"><figure><img src="https://um.mos.ru/content/iblock/f0c/%D0%9C%D1%83%D0%B7%D0%B5%D0%B9%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg" alt="Главный фасад"><figcaption>Главный фасад · фотоматериал из открытого источника</figcaption></figure><figure><img src="https://www.mos.ru/upload/newsfeed/newsfeed/Gl_Denisov%281810%29.jpg" alt="Уличный вид"><figcaption>Уличный ракурс</figcaption></figure><figure><img src="https://um.mos.ru/content/iblock/865/_MG_7431.jpg" alt="Интерьер"><figcaption>Интерьер музейного зала</figcaption></figure><figure><img src="https://um.mos.ru/content/iblock/432/y9sn1yfiyupjnqbw94q0ljayqulo13kr/%D0%94%D0%BE%D0%BC-%D0%BC%D1%83%D0%B7%D0%B5%D0%B9%20%D0%98.%20%D0%A1.%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.%20%D0%98%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D1%8B%20%D0%B1%D0%B5%D0%B7%20%D0%BF%D0%BE%D1%81%D0%B5%D1%82%D0%B5%D0%B9%20%283%29.JPG" alt="Музейная гостиная"><figcaption>Музейная гостиная</figcaption></figure></div></section>
       </section>
 
-      <section id="page-maintenance" class="page specialist-page">
+      <section id="page-maintenance" hidden class="page specialist-page">
         <div class="page-intro"><div><div class="eyebrow">MAINTENANCE · BUILDING CONDITION</div><h2>Состояние здания и эксплуатация</h2><p class="muted">Технические системы, конструктивные элементы и самостоятельный реестр проблем объекта.</p></div><button id="add-building-issue-btn" class="btn btn-primary btn-small">＋ Зафиксировать проблему</button></div>
         <div class="maintenance-alert"><span class="alert-symbol">!</span><div><b>Историческая справка не является текущим обследованием</b><p>В акте 2016–2017 годов отмечались ограниченно-работоспособное состояние и аварийные участки фундаментов и конструкций портика. Это сведения на дату обследования. Текущее состояние необходимо подтвердить актуальной проверкой.</p></div></div>
         <div class="condition-summary" id="condition-summary"></div>
@@ -112,7 +125,7 @@
         <section class="panel building-issues-panel"><div class="section-head"><div><div class="eyebrow">BUILDING ISSUE REGISTER</div><h3>Проблемы состояния здания</h3><p class="muted">Отдельный список неисправностей и дефектов — не привязан к проектным подгруппам.</p></div><span class="status-tag">Отдельный реестр объекта</span></div><div class="building-issue-columns"><div><div class="column-title"><span class="column-dot open"></span><h4>Открытые / в работе</h4><span id="building-open-count" class="count-pill">0</span></div><div id="building-open-issues" class="building-issue-list"></div></div><div><div class="column-title"><span class="column-dot solved"></span><h4>Устранённые</h4><span id="building-solved-count" class="count-pill">0</span></div><div id="building-solved-issues" class="building-issue-list"></div></div></div></section>
       </section>
 
-      <section id="page-overview" class="page">
+      <section id="page-overview" hidden class="page">
         <section class="overview-grid">
           <article class="panel task-kpi-panel">
             <div class="panel-heading"><div><div class="eyebrow">TASK ANALYTICS</div><h2>KPI рабочих задач</h2></div><span class="panel-icon">◔</span></div>
@@ -163,7 +176,7 @@
         </section>
       </section>
 
-      <section id="page-problems" class="page">
+      <section id="page-problems" hidden class="page">
         <div class="page-intro"><div><div class="eyebrow">CONTINUOUS IMPROVEMENT</div><h2>Проблемы и оптимизация</h2><p class="muted">Фиксируйте препятствия, ответственных и фактический результат решений.</p></div><button id="add-issue-btn" class="btn btn-primary">＋ Добавить проблему</button></div>
         <div class="issue-summary" id="issue-summary"></div>
         <div class="issue-columns"><div class="issue-col"><div class="column-title"><span class="column-dot open"></span><h3>Проблемы</h3><span id="open-issue-count" class="count-pill">0</span></div><div id="open-issues" class="issue-list issue-list-scroll"></div></div><div class="solution-col"><div class="column-title"><span class="column-dot solved"></span><h3>Оптимизировано</h3><span id="solved-issue-count" class="count-pill">0</span></div><div id="solved-issues" class="issue-list issue-list-scroll"></div></div></div>

@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'project-control-center-v1';
-const COLORS = ['#c62f3b', '#e46a73', '#8b8c93', '#b4232d', '#77777f', '#d94a54', '#8f1d27', '#55565d'];
+const COLORS = ['#b4232d', '#d94a54', '#477eaf', '#bf852c', '#43866e', '#7f1d27', '#7656a5', '#d66a32', '#326b9b', '#68717e'];
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -77,59 +77,95 @@ state.tasks = (state.tasks || []).map(task => ({
 }));
 let supabase = null;
 let remoteMode = false;
+let connectionState = 'not-configured';
 let currentUser = null;
 let profile = null;
 let activePage = 'public';
 let editingContext = null;
 let memberTeamFilter = 'all';
 let memberRoleFilter = 'all';
+let previewRole = (() => { try { return sessionStorage.getItem('pcc-preview-role') || 'visitor'; } catch { return 'visitor'; } })();
 
 const config = window.APP_CONFIG || {};
 const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey);
-
-function saveLocal() {
-  if (!remoteMode) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  $('#last-saved').textContent = remoteMode ? 'Синхронизация с общей базой' : 'Сохранено в этом браузере';
-}
-const ROLE_LABELS = { visitor:'Посетитель', owner:'Собственник', maintenance:'Эксплуатация и ремонт', design:'Design Studio · Архитектура и дизайн', admin:'Администратор', leader:'Руководитель', member:'Участник', viewer:'Просмотр' };
-const LOGIN_EMAILS = {
-  visitor: 'visitor@pcc-login.example.com',
-  owner: 'owner@pcc-login.example.com',
-  maintenance: 'maintenance@pcc-login.example.com',
-  design: 'design@pcc-login.example.com'
+const ROLE_LABELS = { visitor:'Посетитель', owner:'Собственник', maintenance:'Эксплуатация и ремонт', design:'Архитекторы и дизайнеры', admin:'Администратор' };
+const ROLE_DESCRIPTIONS = {
+  visitor:'История, описание и фотографии Дома-музея И. С. Тургенева',
+  owner:'Полный обзор всех разделов цифрового паспорта здания',
+  maintenance:'Техническое состояние, инженерные системы и дефекты здания',
+  design:'Архитектура, обмеры, чертежи и фотоматериалы',
+  admin:'Административный режим · редактирование всех разделов'
 };
-function currentRole() { return profile?.role || 'visitor'; }
-function canManage(teamId=null) {
-  if (!remoteMode) return true;
-  if (!currentUser) return false;
-  const role=currentRole();
-  if (['admin','owner','maintenance','design'].includes(role)) return true;
-  if (role === 'leader') return teamId ? profile.team_id === teamId : true;
-  return false;
-}
-function canAdmin() { return !remoteMode || ['admin','owner'].includes(currentRole()); }
-function canManageMembers(teamId=null) { return !remoteMode || ['admin','owner'].includes(currentRole()) || (currentRole()==='leader' && (!teamId || profile.team_id===teamId)); }
-function canManageBuilding() { return !remoteMode || ['admin','owner','maintenance'].includes(currentRole()); }
-function canManageDesign() { return !remoteMode || ['admin','owner','design'].includes(currentRole()); }
-function roleView() { return remoteMode ? currentRole() : 'demo'; }
+
+function isAdminSession() { return Boolean(remoteMode && connectionState === 'ready' && currentUser && profile?.role === 'admin'); }
+function canEdit() { return isAdminSession() && previewRole === 'admin'; }
+function currentRole() { return roleView(); }
+function canManage() { return canEdit(); }
+function canAdmin() { return canEdit(); }
+function canManageMembers() { return canEdit(); }
+function canManageBuilding() { return canEdit(); }
+function canManageDesign() { return canEdit(); }
+function roleView() { return !isAdminSession() ? 'visitor' : (['visitor','owner','maintenance','design','admin'].includes(previewRole) ? previewRole : 'admin'); }
 function pageAllowed(page, role=roleView()) {
-  if (role==='demo') return true;
-  if (page==='public') return true;
-  if (page==='design') return ['owner','admin','design'].includes(role);
-  if (page==='maintenance') return ['owner','admin','maintenance'].includes(role);
-  if (['overview','problems'].includes(page)) return ['owner','admin'].includes(role);
+  if (page === 'public') return true;
+  if (role === 'admin' || role === 'owner') return ['design','maintenance','overview','problems'].includes(page);
+  if (role === 'design') return page === 'design';
+  if (role === 'maintenance') return page === 'maintenance';
   return false;
 }
 function applyRoleView() {
   const role=roleView();
   document.body.dataset.role=role;
   const pill=$('#role-pill');
-  if(pill){ const label=ROLE_LABELS[role] || (role==='demo'?'Демо-режим':'Пользователь'); pill.textContent=label; pill.classList.toggle('hidden',role==='demo'); }
-  $$('[data-page]').forEach(button=>button.classList.toggle('role-hidden',!pageAllowed(button.dataset.page,role)));
-  $$('[data-roles]').forEach(button=>button.classList.toggle('role-hidden',!button.dataset.roles.split(',').includes(role) && !(role==='demo')));
-  if(!pageAllowed(activePage,role)) activePage='public';
-  const descriptions={owner:'Все разделы доступны · режим собственника',maintenance:'Техническое состояние, обслуживание и дефекты здания',design:'Архитектура, обмеры, чертежи и фотоматериалы',visitor:'Публичная историческая страница объекта',demo:'Демонстрационный режим · доступны все разделы'};
-  const sub=$('#project-subtitle'); if(sub) sub.textContent=descriptions[role] || 'Цифровой паспорт исторического здания';
+  if (pill) {
+    pill.textContent = role === 'admin' ? 'Администратор' : `Предпросмотр · ${ROLE_LABELS[role]}`;
+    pill.classList.toggle('hidden', role === 'visitor' && !isAdminSession());
+  }
+  $$('[data-page]').forEach(button => {
+    const allowed = pageAllowed(button.dataset.page, role);
+    button.classList.toggle('role-hidden', !allowed);
+    button.setAttribute('aria-hidden', String(!allowed));
+    button.tabIndex = allowed ? 0 : -1;
+  });
+  const specialistLabel=$('[data-nav-group="specialists"]');
+  const ownerLabel=$('[data-nav-group="owner"]');
+  if (specialistLabel) specialistLabel.classList.toggle('role-hidden', !(pageAllowed('design',role) || pageAllowed('maintenance',role)));
+  if (ownerLabel) ownerLabel.classList.toggle('role-hidden', !(role==='owner' || role==='admin'));
+  if (!pageAllowed(activePage,role)) activePage='public';
+  const sub=$('#project-subtitle');
+  if (sub) sub.textContent = ROLE_DESCRIPTIONS[role] || ROLE_DESCRIPTIONS.visitor;
+  const selector=$('#preview-role-select');
+  const previewWrap=$('#preview-role-wrap');
+  if (previewWrap) previewWrap.classList.toggle('hidden',!isAdminSession());
+  if (selector) {
+    const adminOption=selector.querySelector('option[value="admin"]');
+    if (adminOption) adminOption.hidden=!isAdminSession();
+    selector.value=role;
+    selector.disabled=!isAdminSession();
+  }
+}
+function setPreviewRole(role) {
+  if (!isAdminSession()) role='visitor';
+  if (role === 'admin' && !isAdminSession()) role='visitor';
+  if (!['visitor','owner','maintenance','design','admin'].includes(role)) role='visitor';
+  previewRole=role;
+  try { sessionStorage.setItem('pcc-preview-role',role); } catch {}
+  if (!pageAllowed(activePage,role)) activePage='public';
+  render();
+}
+function resetToPublicPreview() {
+  profile=null;
+  currentUser=null;
+  state=seedData();
+  previewRole='visitor';
+  activePage='public';
+  try { sessionStorage.setItem('pcc-preview-role','visitor'); } catch {}
+}
+
+function saveLocal() {
+  if (!remoteMode) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const last=$('#last-saved');
+  if (last) last.textContent = remoteMode ? (isAdminSession() ? 'Синхронизация с защищённой базой' : 'Демонстрационные данные · только просмотр') : 'Локальный предпросмотр · только чтение';
 }
 function teamName(id) { return state.teams.find(t=>t.id===id)?.name || 'Без группы'; }
 function memberName(id) { return state.members.find(m=>m.id===id)?.name || 'Не назначен'; }
@@ -186,18 +222,8 @@ function overallStats() {
   const auto=assigned?Math.round(earned/assigned*100):0;
   return {done:roundPoints(earned),total:roundPoints(assigned),earnedPoints:roundPoints(earned),assignedPoints:roundPoints(assigned),percent:state.project.progressMode==='manual' ? Number(state.project.manualProgress||0) : auto,auto,completedTasks:state.tasks.filter(t=>t.status==='Done').length};
 }
-function taskCanManage(task) {
-  if (!remoteMode) return true;
-  if (!currentUser || !profile) return false;
-  if (['admin','owner','maintenance','design'].includes(profile.role)) return true;
-  if (profile.role!=='leader') return false;
-  if (task?.createdBy && task.createdBy===currentUser.id) return true;
-  if (task?.teamId && profile.team_id===task.teamId) return true; // compatibility with older task records
-  return taskAssigneeIds(task || {}).some(id=>state.members.some(m=>m.id===id && m.teamId===profile.team_id));
-}
-function canCreateTask() {
-  return !remoteMode || (!!currentUser && ['admin','owner','leader','maintenance','design'].includes(profile?.role));
-}
+function taskCanManage() { return canEdit(); }
+function canCreateTask() { return canEdit(); }
 function logActivity(action,target) {
   const entry = {id:uid(),action,target,createdAt:new Date().toISOString()};
   state.activity.unshift(entry); state.activity = state.activity.slice(0,30);
@@ -209,45 +235,39 @@ function toast(message, error=false) {
 }
 
 async function remoteLoad() {
-  const prof = currentUser
-    ? await supabase.from('profiles').select('*').eq('user_id',currentUser.id).maybeSingle()
-    : {data:null,error:null};
+  if (!supabase) throw new Error('Supabase не подключён.');
+  if (!currentUser) {
+    resetToPublicPreview();
+    return;
+  }
+  const prof=await supabase.from('profiles').select('*').eq('user_id',currentUser.id).maybeSingle();
   if (prof.error) throw prof.error;
+  if (!prof.data || prof.data.role !== 'admin') {
+    await supabase.auth.signOut();
+    resetToPublicPreview();
+    throw new Error('Вход разрешён только администраторам. Тестовые профили доступны через переключатель предпросмотра.');
+  }
   profile=prof.data;
-  const role=profile?.role || 'visitor';
-  const owner=['admin','owner'].includes(role);
-  const maint=owner || role==='maintenance';
-  const design=owner || role==='design';
-  const emptyRows={data:[],error:null};
-  const emptySingle={data:null,error:null};
   const [settings,teams,members,tasks,taskAssignees,issues,activity,systems,bIssues,measurements,documents] = await Promise.all([
-    owner ? supabase.from('project_settings').select('*').eq('id',1).maybeSingle() : Promise.resolve(emptySingle),
-    owner ? supabase.from('teams').select('*').order('sort_order') : Promise.resolve(emptyRows),
-    owner ? supabase.from('members').select('*').order('name') : Promise.resolve(emptyRows),
-    owner ? supabase.from('tasks').select('*').order('created_at',{ascending:false}) : Promise.resolve(emptyRows),
-    owner ? supabase.from('task_assignees').select('task_id,member_id') : Promise.resolve(emptyRows),
-    owner ? supabase.from('issues').select('*').order('updated_at',{ascending:false}) : Promise.resolve(emptyRows),
-    owner ? supabase.from('activity_log').select('*').order('created_at',{ascending:false}).limit(20) : Promise.resolve(emptyRows),
-    maint ? supabase.from('building_systems').select('*').order('sort_order') : Promise.resolve(emptyRows),
-    maint ? supabase.from('building_issues').select('*').order('updated_at',{ascending:false}) : Promise.resolve(emptyRows),
-    design ? supabase.from('building_measurements').select('*').order('sort_order') : Promise.resolve(emptyRows),
-    design ? supabase.from('building_documents').select('*').order('created_at',{ascending:false}) : Promise.resolve(emptyRows)
+    supabase.from('project_settings').select('*').eq('id',1).maybeSingle(),
+    supabase.from('teams').select('*').order('sort_order'),
+    supabase.from('members').select('*').order('name'),
+    supabase.from('tasks').select('*').order('created_at',{ascending:false}),
+    supabase.from('task_assignees').select('task_id,member_id'),
+    supabase.from('issues').select('*').order('updated_at',{ascending:false}),
+    supabase.from('activity_log').select('*').order('created_at',{ascending:false}).limit(20),
+    supabase.from('building_systems').select('*').order('sort_order'),
+    supabase.from('building_issues').select('*').order('updated_at',{ascending:false}),
+    supabase.from('building_measurements').select('*').order('sort_order'),
+    supabase.from('building_documents').select('*').order('created_at',{ascending:false})
   ]);
   for (const r of [settings,teams,members,tasks,taskAssignees,issues,activity,systems,bIssues,measurements,documents]) if (r.error) throw r.error;
-  if (settings.data) state.project = {id:1,title:settings.data.title,subtitle:settings.data.subtitle,progressMode:settings.data.progress_mode||'auto',manualProgress:settings.data.manual_progress??0};
+  if (settings.data) state.project={id:1,title:settings.data.title,subtitle:settings.data.subtitle,progressMode:settings.data.progress_mode||'auto',manualProgress:settings.data.manual_progress??0};
   state.teams=(teams.data||[]).map(t=>({id:t.id,name:t.name,color:t.color||COLORS[0],progressMode:t.progress_mode||'auto',manualProgress:t.manual_progress??0}));
   state.members=(members.data||[]).map(m=>({id:m.id,name:m.name,teamId:m.team_id,role:m.role,progressMode:m.progress_mode||'auto',manualProgress:m.manual_progress??0}));
-  const taskMembers = new Map();
-  for (const link of (taskAssignees.data||[])) {
-    if (!taskMembers.has(link.task_id)) taskMembers.set(link.task_id, []);
-    taskMembers.get(link.task_id).push(link.member_id);
-  }
-  state.tasks=(tasks.data||[]).map(t=>({
-    id:t.id,title:t.title,teamId:t.team_id,
-    assigneeIds:taskMembers.get(t.id) || (t.assignee_id ? [t.assignee_id] : []),
-    allocationMode:t.allocation_mode==='full'?'full':'split',createdBy:t.created_by||null,
-    dueDate:t.due_date,status:t.status,weight:Number(t.weight||1)
-  }));
+  const taskMembers=new Map();
+  for (const link of (taskAssignees.data||[])) { if(!taskMembers.has(link.task_id)) taskMembers.set(link.task_id,[]); taskMembers.get(link.task_id).push(link.member_id); }
+  state.tasks=(tasks.data||[]).map(t=>({id:t.id,title:t.title,teamId:t.team_id,assigneeIds:taskMembers.get(t.id)||(t.assignee_id?[t.assignee_id]:[]),allocationMode:t.allocation_mode==='full'?'full':'split',createdBy:t.created_by||null,dueDate:t.due_date,status:t.status,weight:Number(t.weight||1)}));
   state.issues=(issues.data||[]).map(i=>({id:i.id,title:i.title,description:i.description,teamId:i.team_id,priority:i.priority,status:i.status,resolution:i.resolution||''}));
   state.activity=(activity.data||[]).map(a=>({id:a.id,action:a.action,target:a.target,createdAt:a.created_at}));
   state.buildingSystems=(systems.data||[]).map(x=>({id:x.id,name:x.name,category:x.category,status:x.status,location:x.location||'',details:x.details||'',lastInspected:x.last_inspected,inspectedBy:x.inspected_by||''}));
@@ -257,13 +277,13 @@ async function remoteLoad() {
 }
 
 function subscribeRemoteChanges() {
-  if (!supabase || !remoteMode) return;
+  if (!supabase || !remoteMode || !isAdminSession()) return;
   const tables=['project_settings','teams','members','tasks','task_assignees','issues','activity_log','building_systems','building_issues','building_measurements','building_documents'];
   let channel=supabase.channel('project-control-center-live');
   for (const table of tables) {
     channel=channel.on('postgres_changes',{event:'*',schema:'public',table},async()=>{
       try { await remoteLoad(); render(); }
-      catch(err) { console.warn('Live refresh failed',err); }
+      catch(err) { console.warn('Live refresh failed',err); connectionState='error'; render(); toast('Потеряна связь с базой. Редактирование временно отключено.',true); }
     });
   }
   channel.subscribe();
@@ -285,12 +305,10 @@ function dbRow(kind, item) {
 }
 const tableFor={team:'teams',member:'members',task:'tasks',issue:'issues',project:'project_settings',buildingSystem:'building_systems',buildingIssue:'building_issues',buildingMeasurement:'building_measurements',buildingDocument:'building_documents'};
 async function remoteSave(kind,item) {
-  if (!remoteMode) return;
-  if (!currentUser) throw new Error('Сначала войдите в систему.');
+  if (!remoteMode) throw new Error('Общая база не подключена. Редактирование отключено.');
+  if (!canEdit()) throw new Error('Изменять данные может только администратор в административном режиме.');
   if (kind==='task') {
-    if (!taskCanManage(item) && !(profile?.role==='leader' && taskAssigneeIds(item).some(id=>state.members.some(m=>m.id===id&&m.teamId===profile.team_id)))) {
-      throw new Error('Для изменения задачи нужен доступ администратора, её создателя или руководителя одной из задействованных групп.');
-    }
+    if (!canEdit()) throw new Error('Изменять задачи может только администратор.');
     const taskRow=dbRow('task',item);
     const isExistingTask=editingContext?.kind==='task' && editingContext.id===item.id;
     const taskWrite=isExistingTask
@@ -314,26 +332,22 @@ async function remoteSave(kind,item) {
     }
     return;
   }
-  if (kind==='buildingSystem' || kind==='buildingIssue') { if(!canManageBuilding()) throw new Error('Раздел доступен для редактирования профилю эксплуатации и собственнику.'); }
-  else if (kind==='buildingMeasurement' || kind==='buildingDocument') { if(!canManageDesign()) throw new Error('Раздел доступен для редактирования Design Studio и собственнику.'); }
-  else if (!canManage()) throw new Error('Недостаточно прав для изменения данных.');
+  if (!canEdit()) throw new Error('Изменять информацию может только администратор.');
   const {error}=await supabase.from(tableFor[kind]).upsert(dbRow(kind,item));
   if (error) throw error;
 }
 async function remoteDelete(kind,id) {
-  if (!remoteMode) return;
-  if (!currentUser) throw new Error('Сначала войдите в систему.');
+  if (!remoteMode) throw new Error('Общая база не подключена. Редактирование отключено.');
+  if (!canEdit()) throw new Error('Изменять данные может только администратор в административном режиме.');
   if (kind==='task') {
     const task=state.tasks.find(t=>t.id===id);
-    if (!task || !taskCanManage(task)) throw new Error('Недостаточно прав для удаления этой задачи.');
-  } else if (['buildingSystem','buildingIssue'].includes(kind) && !canManageBuilding()) throw new Error('Недостаточно прав для изменения состояния здания.');
-  else if (['buildingMeasurement','buildingDocument'].includes(kind) && !canManageDesign()) throw new Error('Недостаточно прав для изменения проектных материалов.');
-  else if (!['buildingSystem','buildingIssue','buildingMeasurement','buildingDocument'].includes(kind) && !canManage()) throw new Error('Недостаточно прав для удаления данных.');
+    if (!task || !canEdit()) throw new Error('Удалять задачи может только администратор.');
+  } else if (!canEdit()) throw new Error('Удалять информацию может только администратор.');
   const {error}=await supabase.from(tableFor[kind]).delete().eq('id',id);
   if (error) throw error;
 }
 async function remoteActivity(entry) {
-  if (!remoteMode) return;
+  if (!remoteMode || !canEdit()) return;
   const {error}=await supabase.from('activity_log').insert({action:entry.action,target:entry.target,actor_name:profile?.display_name||currentUser?.email||'Участник'});
   if (error) console.warn('Activity write failed',error);
 }
@@ -360,17 +374,60 @@ async function removeEntity(kind,id,label) {
 
 function recordDateForIssue(id){return state.buildingIssues.find(x=>x.id===id)?.reportedAt||new Date().toISOString();}
 
+function updatePageVisibility() {
+  const pages=$$('.page');
+  const next=pages.find(page=>page.id===`page-${activePage}`) || $('#page-public');
+  const previous=pages.find(page=>page.classList.contains('active'));
+  pages.forEach(page=>{
+    const active=page===next;
+    page.hidden=!active;
+    page.classList.toggle('active',active);
+    page.setAttribute('aria-hidden',String(!active));
+    page.inert=!active;
+  });
+  $$('.nav-item,.tab').forEach(button=>button.classList.toggle('active',button.dataset.page===activePage));
+  // The active page receives a CSS fade/slide transition. Keeping navigation CSS-driven
+  // avoids competing animations and works even when the Web Animations API is unavailable.
+}
+
+function clearRoleScopedContent() {
+  const containers=['#task-legend','#team-circles','#members-table','#activity-list','#tasks-table',
+    '#issue-summary','#open-issues','#solved-issues','#condition-summary','#building-systems',
+    '#building-open-issues','#building-solved-issues','#measurements-table','#building-documents'];
+  containers.forEach(selector=>{const el=$(selector);if(el)el.replaceChildren();});
+  ['#task-total','#done-count','#progress-count','#todo-count','#member-count','#open-issue-count',
+    '#solved-issue-count','#building-open-count','#building-solved-count'].forEach(selector=>{const el=$(selector);if(el)el.textContent='—';});
+  ['#overall-percent','#overall-completed','#overall-remaining','#progress-caption'].forEach(selector=>{const el=$(selector);if(el)el.textContent='—';});
+  const bar=$('#overall-bar'); if(bar)bar.style.width='0%';
+}
+
+function renderRoleScopedModules() {
+  clearRoleScopedContent();
+  const role=roleView();
+  if (role==='owner' || role==='admin') {
+    const stats=overallStats();
+    $('#overall-percent').textContent=`${stats.percent}%`;
+    $('#overall-bar').style.width=`${Math.max(0,Math.min(100,stats.percent))}%`;
+    $('#overall-completed').textContent=`${formatPoints(stats.earnedPoints)} баллов заработано`;
+    $('#overall-remaining').textContent=`${formatPoints(Math.max(0,stats.assignedPoints-stats.earnedPoints))} не заработано`;
+    $('#progress-caption').textContent=state.project.progressMode==='manual'?'ручное значение администратора':'по начисленным баллам выполненных задач';
+    renderTaskKpi(); renderTeams(); renderMembers(); renderTasks(); renderActivity(); renderIssues();
+  }
+  if (role==='design' || role==='owner' || role==='admin') {
+    renderMeasurements(); renderBuildingDocuments();
+  }
+  if (role==='maintenance' || role==='owner' || role==='admin') {
+    renderBuildingSystems(); renderBuildingIssues();
+  }
+}
+
 function render() {
-  $('#project-title').textContent='Дом-музей И. С. Тургенева';
-  const stats=overallStats();
-  $('#overall-percent').textContent=`${stats.percent}%`;
-  $('#overall-bar').style.width=`${Math.max(0,Math.min(100,stats.percent))}%`;
-  $('#overall-completed').textContent=`${formatPoints(stats.earnedPoints)} баллов заработано`;
-  $('#overall-remaining').textContent=`${formatPoints(Math.max(0,stats.assignedPoints-stats.earnedPoints))} не заработано`;
-  $('#progress-caption').textContent=state.project.progressMode==='manual'?'ручное значение администратора':'по начисленным баллам выполненных задач';
-  renderTaskKpi(); renderTeams(); renderMembers(); renderTasks(); renderActivity(); renderIssues(); renderBuildingSystems(); renderBuildingIssues(); renderMeasurements(); renderBuildingDocuments(); applyRoleView(); renderAccess();
-  $$('.page').forEach(p=>p.classList.toggle('active',p.id===`page-${activePage}`));
-  $$('.nav-item,.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===activePage));
+  $('#project-title').textContent=state.project?.title || 'Дом-музей И. С. Тургенева';
+  renderRoleScopedModules();
+  applyRoleView();
+  if (!pageAllowed(activePage,roleView())) activePage='public';
+  updatePageVisibility();
+  renderAccess();
 }
 function renderTaskKpi() {
   const done=state.tasks.filter(t=>t.status==='Done').length;
@@ -479,34 +536,34 @@ function renderBuildingDocuments(){
 
 function renderAccess() {
   const badge=$('#mode-pill'), stateEl=$('#access-state');
-  if(remoteMode){
-    badge.textContent='LIVE DATABASE'; badge.className='mode-pill live';
-    stateEl.innerHTML=currentUser?`<span class="status-dot"></span> ${safe(profile?.display_name||currentRole())} · ${safe(ROLE_LABELS[currentRole()]||currentRole())}`:'<span class="status-dot public"></span> Публичный просмотр · без входа';
-    $('#login-btn').classList.toggle('hidden',!!currentUser); $('#logout-btn').classList.toggle('hidden',!currentUser);
+  const adminSession=isAdminSession();
+  const editMode=canEdit();
+  if (connectionState==='error') {
+    badge.textContent='CONNECTION ERROR'; badge.className='mode-pill error';
+    stateEl.innerHTML='<span class="status-dot danger"></span> Не удалось подключиться к общей базе';
+  } else if (remoteMode && connectionState==='ready') {
+    badge.textContent=adminSession ? (editMode?'LIVE DATABASE':'LIVE · PREVIEW') : 'PUBLIC VIEW';
+    badge.className='mode-pill live';
+    stateEl.innerHTML=adminSession
+      ? `<span class="status-dot"></span> Администратор · ${safe(currentUser.email||'аккаунт')}${editMode?' · редактирование включено':' · предпросмотр роли'}`
+      : '<span class="status-dot public"></span> Публичная музейная страница · только чтение';
   } else {
-    badge.textContent='DEMO'; badge.className='mode-pill';
-    stateEl.innerHTML='<span class="status-dot"></span> Демо-режим · только это устройство';
-    $('#login-btn').classList.remove('hidden'); $('#logout-btn').classList.add('hidden');
+    badge.textContent='PREVIEW'; badge.className='mode-pill';
+    stateEl.innerHTML='<span class="status-dot public"></span> Демонстрационные данные · только чтение';
   }
-  const admin=canAdmin(), role=currentRole();
-  ['#edit-project-btn','#edit-progress-btn','#add-team-btn'].forEach(sel=>$(sel).classList.toggle('hidden',!admin));
-  $('#add-member-btn').classList.toggle('hidden',!canManageMembers());
-  $('#add-issue-btn').classList.toggle('hidden',!canManage());
-  $('#add-task-btn').classList.toggle('hidden',!canCreateTask());
-  $$('#members-table [data-edit], #members-table [data-delete]').forEach(btn=>{const m=state.members.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!canManageMembers(m?.teamId));});
-  $$('#tasks-table [data-edit], #tasks-table [data-delete]').forEach(btn=>{const t=state.tasks.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!taskCanManage(t||{}));});
-  $$('#open-issues [data-edit], #open-issues [data-delete], #solved-issues [data-edit], #solved-issues [data-delete]').forEach(btn=>{const i=state.issues.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!canManage(i?.teamId));});
-  $$('.team-card-actions').forEach(el=>el.classList.toggle('hidden',!admin));
-  $('#add-building-issue-btn')?.classList.toggle('hidden',!canManageBuilding());
-  $('#add-system-btn')?.classList.toggle('hidden',!canManageBuilding());
-  $('#add-measurement-btn')?.classList.toggle('hidden',!canManageDesign());
-  $('#add-document-btn')?.classList.toggle('hidden',!canManageDesign());
-  $('#add-issue-btn')?.classList.toggle('hidden',!canManage());
+  $('#login-btn').classList.toggle('hidden',adminSession);
+  $('#logout-btn').classList.toggle('hidden',!adminSession);
+  ['#edit-project-btn','#edit-progress-btn','#add-team-btn'].forEach(sel=>{const el=$(sel);if(el)el.classList.toggle('hidden',!editMode);});
+  ['#add-member-btn','#add-issue-btn','#add-task-btn','#add-building-issue-btn','#add-system-btn','#add-measurement-btn','#add-document-btn'].forEach(sel=>{const el=$(sel);if(el)el.classList.toggle('hidden',!editMode);});
+  $$('.row-actions, .team-card-actions, .system-actions').forEach(el=>el.classList.toggle('hidden',!editMode));
+  $$('[data-edit], [data-delete]').forEach(button=>button.classList.toggle('hidden',!editMode));
+  const selector=$('#preview-role-select'); if(selector)selector.value=roleView();
+  const previewWrap=$('#preview-role-wrap'); if(previewWrap)previewWrap.classList.toggle('hidden',!adminSession);
 }
 
 const field=(name,label,type='text',value='',options=[])=>({name,label,type,value,options});
 function openEditor(kind,record=null) {
-  if(remoteMode && (['buildingSystem','buildingIssue'].includes(kind)?!canManageBuilding():(['buildingMeasurement','buildingDocument'].includes(kind)?!canManageDesign():(kind==='task' ? (record?!taskCanManage(record):!canCreateTask()) : (['project','team'].includes(kind)?!canAdmin():(kind==='member'?!canManageMembers(record?.teamId||null):!canManage(record?.teamId||null))))))){toast('Для редактирования нужны соответствующие права доступа.',true);return;}
+  if (!canEdit()) { toast('Редактирование доступно только администратору после входа по email и паролю.',true); return; }
   editingContext={kind,id:record?.id||null};
   $('#dialog-fields').onchange=null;
   const teamOptions=state.teams.filter(t=>canManage(t.id)).map(t=>({value:t.id,label:t.name}));
@@ -551,8 +608,8 @@ function openEditor(kind,record=null) {
 function openLogin() {
   editingContext={kind:'login',id:null};
   $('#dialog-fields').onchange=null;
-  $('#dialog-title').textContent='Вход для участника'; $('#dialog-eyebrow').textContent='SUPABASE AUTH';
-  $('#dialog-fields').innerHTML='<label class="form-field"><span>Логин</span><input name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="visitor / owner / maintenance / design" required /></label><label class="form-field"><span>Пароль</span><input name="password" type="password" autocomplete="current-password" required /></label><p class="form-help">Доступны четыре профиля: visitor, owner, maintenance и design. Пароли выдаёт администратор проекта.</p>';
+  $('#dialog-title').textContent='Вход администратора'; $('#dialog-eyebrow').textContent='ADMINISTRATOR ACCESS';
+  $('#dialog-fields').innerHTML='<label class="form-field"><span>Email администратора</span><input name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="admin@example.com" required /></label><label class="form-field"><span>Пароль</span><input name="password" type="password" autocomplete="current-password" required /></label><p class="form-help">Вход разрешён только аккаунтам, которым администратор проекта назначил роль admin в Supabase. Тестовые профили выбираются отдельно и не являются аккаунтами.</p>';
   $('#editor-dialog').showModal();
 }
 
@@ -561,8 +618,26 @@ $('#editor-form').addEventListener('submit',async e=>{
   const kind=editingContext.kind; const formData=new FormData(e.currentTarget); const values=Object.fromEntries(formData.entries());
   if(kind==='task') values.assigneeIds=formData.getAll('assigneeIds');
   if(kind==='login'){
-    try {const username=String(values.username||'').trim().toLowerCase();const email=LOGIN_EMAILS[username];if(!email)throw new Error('Неизвестный логин. Используйте visitor, owner, maintenance или design.');const {error}=await supabase.auth.signInWithPassword({email,password:values.password});if(error)throw error;$('#editor-dialog').close();toast('Вы вошли в систему');}
-    catch(err){toast(err.message||'Ошибка входа',true);} return;
+    try {
+      if(!supabase || !remoteMode || connectionState!=='ready') throw new Error('Общая база недоступна. Вход временно невозможен.');
+      const {data,error}=await supabase.auth.signInWithPassword({email:String(values.email||'').trim(),password:values.password});
+      if(error) throw error;
+      currentUser=data.user;
+      previewRole='admin';
+      await remoteLoad();
+      if(!isAdminSession()) throw new Error('Для этого аккаунта не назначена роль admin.');
+      subscribeRemoteChanges();
+      $('#editor-dialog').close(); activePage='public'; render(); toast('Вход администратора выполнен');
+    } catch(err) {
+      const rejectedNonAdmin=String(err?.message||'').startsWith('Вход разрешён только администраторам');
+      if (supabase && currentUser) {
+        try { await supabase.auth.signOut(); } catch {}
+        resetToPublicPreview();
+        if (!rejectedNonAdmin) connectionState='error';
+      }
+      toast(err.message||'Ошибка входа',true); render();
+    }
+    return;
   }
   let item, list, action;
   if(kind==='project'){
@@ -574,7 +649,6 @@ $('#editor-form').addEventListener('submit',async e=>{
   } else if(kind==='task'){
     const assigneeIds=[...new Set((values.assigneeIds||[]).filter(id=>state.members.some(m=>m.id===id)))];
     if(!assigneeIds.length){toast('Выберите хотя бы одного исполнителя.',true);return;}
-    if(remoteMode && profile?.role==='leader' && editingContext.id===null && !assigneeIds.some(id=>state.members.some(m=>m.id===id&&m.teamId===profile.team_id))){toast('Чтобы создать задачу, назначьте хотя бы одного участника своей группы. Остальных исполнителей можно выбрать из любых групп.',true);return;}
     item={id:editingContext.id||uid(),title:values.title.trim(),teamId:null,assigneeIds,allocationMode:values.allocationMode==='full'?'full':'split',createdBy:currentUser?.id||(editingContext.id?(state.tasks.find(t=>t.id===editingContext.id)?.createdBy||null):null),dueDate:values.dueDate,status:values.status,weight:Math.max(0.01,Math.round((Number(values.weight)||1)*100)/100)};list='tasks';action='Обновлена задача';
   } else if(kind==='issue'){
     item={id:editingContext.id||uid(),title:values.title.trim(),teamId:values.teamId,priority:values.priority,status:values.status,description:values.description.trim(),resolution:values.resolution.trim()};list='issues';action='Обновлена проблема / решение';  } else if(kind==='buildingSystem'){
@@ -606,10 +680,19 @@ $('#add-measurement-btn')?.addEventListener('click',()=>openEditor('buildingMeas
 $('#add-document-btn')?.addEventListener('click',()=>openEditor('buildingDocument'));
 $('#member-team-filter').addEventListener('change',e=>{memberTeamFilter=e.target.value;renderMembers();renderAccess();});
 $('#member-role-filters').addEventListener('click',e=>{const button=e.target.closest('[data-member-role-filter]');if(!button)return;memberRoleFilter=button.dataset.memberRoleFilter;renderMembers();renderAccess();});
-$('#login-btn').addEventListener('click',()=>configured&&supabase?openLogin():toast('Сначала подключите проект Supabase в config.js и выполните SQL из папки supabase.',true));
-$('#logout-btn').addEventListener('click',async()=>{if(supabase)await supabase.auth.signOut();});
-
-$$('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{activePage=btn.dataset.page;render();}));
+$('#login-btn').addEventListener('click',()=>configured&&supabase&&connectionState==='ready'?openLogin():toast('Подключение к Supabase не настроено или недоступно. Проверьте config.js и SQL-миграцию.',true));
+$('#logout-btn').addEventListener('click',async()=>{if(supabase)await supabase.auth.signOut();resetToPublicPreview();render();});
+$('#preview-role-select')?.addEventListener('change',event=>setPreviewRole(event.target.value));
+$$('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
+  const next=btn.dataset.page;
+  if(!pageAllowed(next,roleView())) { toast('Этот раздел недоступен в выбранном профиле.',true); return; }
+  if(next===activePage)return;
+  activePage=next;
+  // Navigation only changes the active page; it does not rebuild every table and panel.
+  // This preserves scroll positions, prevents content flashing and avoids layout jumps.
+  updatePageVisibility();
+  if (window.scrollY > 0) window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}));
 document.addEventListener('click',e=>{
   const edit=e.target.closest('[data-edit]');
   if(edit){const kind=edit.dataset.edit;const list={team:'teams',member:'members',task:'tasks',issue:'issues',buildingSystem:'buildingSystems',buildingIssue:'buildingIssues',buildingMeasurement:'buildingMeasurements',buildingDocument:'buildingDocuments'}[kind];openEditor(kind,state[list].find(x=>x.id===edit.dataset.id));return;}
@@ -632,21 +715,42 @@ applyTheme((()=>{try{return localStorage.getItem('pcc-theme')||'light';}catch{re
 $('#theme-toggle')?.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 
 async function init() {
-  if(configured){
-    try{
+  if (configured) {
+    connectionState='connecting';
+    try {
       const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2');
-      supabase=createClient(config.supabaseUrl,config.supabaseAnonKey);
+      supabase=createClient(config.supabaseUrl,config.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
       remoteMode=true;
-      const {data:{session}}=await supabase.auth.getSession(); currentUser=session?.user||null;
-      await remoteLoad();
-      subscribeRemoteChanges();
-      supabase.auth.onAuthStateChange(async(_event,session)=>{
-        currentUser=session?.user||null;
-        try{await remoteLoad();render();}catch(err){toast(err.message||'Не удалось загрузить данные',true);}
+      supabase.auth.onAuthStateChange((event)=>{
+        if(event==='SIGNED_OUT') {
+          currentUser=null; resetToPublicPreview(); connectionState='ready'; render();
+        }
       });
-    }catch(err){console.error(err);remoteMode=false;toast('Не удалось подключиться к Supabase. Проверьте config.js.',true);}
+      const {data:{session},error:sessionError}=await supabase.auth.getSession();
+      if(sessionError) throw sessionError;
+      currentUser=session?.user||null;
+      if(currentUser) {
+        previewRole='admin';
+        await remoteLoad();
+      } else {
+        resetToPublicPreview();
+      }
+      connectionState='ready';
+      subscribeRemoteChanges();
+    } catch(err) {
+      console.error(err);
+      const rejectedLegacyProfile=String(err?.message||'').startsWith('Вход разрешён только администраторам');
+      connectionState=rejectedLegacyProfile?'ready':'error';
+      resetToPublicPreview();
+      toast(err.message||'Не удалось подключиться к Supabase. Проверьте config.js и миграции.',true);
+    }
+  } else {
+    remoteMode=false;
+    connectionState='not-configured';
+    resetToPublicPreview();
   }
-  render(); saveLocal();
+  render();
+  saveLocal();
 }
 
 init();
