@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'project-control-center-v1';
-const COLORS = ['#b5ef23', '#53c7b7', '#7e9cf5', '#e7a35b', '#c28de8', '#ef7c88', '#6bc28a', '#d3c75f'];
+const COLORS = ['#c62f3b', '#e46a73', '#8b8c93', '#b4232d', '#77777f', '#d94a54', '#8f1d27', '#55565d'];
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -9,10 +9,10 @@ const stamp = value => new Date(value).toLocaleString('ru-RU', {day:'numeric', m
 
 const seedData = () => {
   const teams = [
-    {id:'team-1', name:'Research', color:'#b5ef23', progressMode:'auto', manualProgress:0},
-    {id:'team-2', name:'Design', color:'#53c7b7', progressMode:'auto', manualProgress:0},
-    {id:'team-3', name:'Development', color:'#7e9cf5', progressMode:'auto', manualProgress:0},
-    {id:'team-4', name:'Testing', color:'#e7a35b', progressMode:'auto', manualProgress:0}
+    {id:'team-1', name:'Research', color:'#c62f3b', progressMode:'auto', manualProgress:0},
+    {id:'team-2', name:'Design', color:'#e46a73', progressMode:'auto', manualProgress:0},
+    {id:'team-3', name:'Development', color:'#8b8c93', progressMode:'auto', manualProgress:0},
+    {id:'team-4', name:'Testing', color:'#b4232d', progressMode:'auto', manualProgress:0}
   ];
   const members = Array.from({length:40},(_,i)=>({
     id:`m${i+1}`,
@@ -73,14 +73,39 @@ function saveLocal() {
   if (!remoteMode) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   $('#last-saved').textContent = remoteMode ? 'Синхронизация с общей базой' : 'Сохранено в этом браузере';
 }
+const ROLE_LABELS = { visitor:'Посетитель', owner:'Собственник', maintenance:'Эксплуатация и ремонт', design:'Design Studio · Архитектура и дизайн', admin:'Администратор', leader:'Руководитель', member:'Участник', viewer:'Просмотр' };
+const LOGIN_EMAILS = {
+  visitor: 'visitor@pcc-login.example.com',
+  owner: 'owner@pcc-login.example.com',
+  maintenance: 'maintenance@pcc-login.example.com',
+  design: 'design@pcc-login.example.com'
+};
+function currentRole() { return profile?.role || 'visitor'; }
 function canManage(teamId=null) {
   if (!remoteMode) return true;
   if (!currentUser) return false;
-  if (profile?.role === 'admin') return true;
-  if (profile?.role === 'leader') return teamId ? profile.team_id === teamId : true;
+  const role=currentRole();
+  if (['admin','owner','maintenance','design'].includes(role)) return true;
+  if (role === 'leader') return teamId ? profile.team_id === teamId : true;
   return false;
 }
-function canAdmin() { return !remoteMode || profile?.role === 'admin'; }
+function canAdmin() { return !remoteMode || ['admin','owner'].includes(currentRole()); }
+function canManageMembers(teamId=null) { return !remoteMode || ['admin','owner'].includes(currentRole()) || (currentRole()==='leader' && (!teamId || profile.team_id===teamId)); }
+function roleView() { return remoteMode ? currentRole() : 'demo'; }
+function applyRoleView() {
+  const role=roleView();
+  document.body.dataset.role=role;
+  const pill=$('#role-pill');
+  if(pill){ const label=ROLE_LABELS[role] || (role==='demo'?'Демо-просмотр':'Пользователь'); pill.textContent=label; pill.classList.toggle('hidden',role==='demo'); }
+  const problemsNav=$('[data-page="problems"]');
+  if(problemsNav) problemsNav.classList.toggle('hidden',role==='visitor');
+  if(role==='visitor' && activePage==='problems') activePage='overview';
+  const overviewLabel=$('#project-subtitle');
+  if(overviewLabel && remoteMode && currentUser){
+    const descriptions={owner:'Панель собственника · состояние объекта и ключевые показатели',maintenance:'Эксплуатация и ремонт · задачи, неисправности и обслуживание',design:'Архитектура и дизайн · проектные задачи, решения и согласования',visitor:'Публичная информация об объекте'};
+    overviewLabel.textContent=descriptions[role] || state.project.subtitle;
+  } else if(overviewLabel) overviewLabel.textContent=state.project.subtitle;
+}
 function teamName(id) { return state.teams.find(t=>t.id===id)?.name || 'Без группы'; }
 function memberName(id) { return state.members.find(m=>m.id===id)?.name || 'Не назначен'; }
 function taskAssigneeIds(task) {
@@ -139,14 +164,14 @@ function overallStats() {
 function taskCanManage(task) {
   if (!remoteMode) return true;
   if (!currentUser || !profile) return false;
-  if (profile.role==='admin') return true;
+  if (['admin','owner','maintenance','design'].includes(profile.role)) return true;
   if (profile.role!=='leader') return false;
   if (task?.createdBy && task.createdBy===currentUser.id) return true;
   if (task?.teamId && profile.team_id===task.teamId) return true; // compatibility with older task records
   return taskAssigneeIds(task || {}).some(id=>state.members.some(m=>m.id===id && m.teamId===profile.team_id));
 }
 function canCreateTask() {
-  return !remoteMode || (!!currentUser && (profile?.role==='admin' || profile?.role==='leader'));
+  return !remoteMode || (!!currentUser && ['admin','owner','leader','maintenance','design'].includes(profile?.role));
 }
 function logActivity(action,target) {
   const entry = {id:uid(),action,target,createdAt:new Date().toISOString()};
@@ -291,7 +316,7 @@ function render() {
   $('#overall-completed').textContent=`${formatPoints(stats.earnedPoints)} баллов заработано`;
   $('#overall-remaining').textContent=`${formatPoints(Math.max(0,stats.assignedPoints-stats.earnedPoints))} не заработано`;
   $('#progress-caption').textContent=state.project.progressMode==='manual'?'ручное значение администратора':'по начисленным баллам выполненных задач';
-  renderTaskKpi(); renderTeams(); renderMembers(); renderTasks(); renderActivity(); renderIssues(); renderAccess();
+  renderTaskKpi(); renderTeams(); renderMembers(); renderTasks(); renderActivity(); renderIssues(); applyRoleView(); renderAccess();
   $$('.page').forEach(p=>p.classList.toggle('active',p.id===`page-${activePage}`));
   $$('.nav-item,.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===activePage));
 }
@@ -301,10 +326,10 @@ function renderTaskKpi() {
   const todo=state.tasks.filter(t=>t.status==='To Do').length;
   const total=state.tasks.length;
   const d=total?done/total*100:0, p=total?inProgress/total*100:0;
-  $('#task-donut').style.background=`conic-gradient(#b5ef23 0 ${d}%, #53c7b7 ${d}% ${d+p}%, #29332b ${d+p}% 100%)`;
+  $('#task-donut').style.background=`conic-gradient(#c62f3b 0 ${d}%, #e46a73 ${d}% ${d+p}%, #d9d9dd ${d+p}% 100%)`;
   $('#task-total').textContent=total;
   $('#done-count').textContent=done; $('#progress-count').textContent=inProgress; $('#todo-count').textContent=todo;
-  $('#task-legend').innerHTML=`<div><i style="background:#b5ef23"></i><span>Выполнено</span><b>${done}</b></div><div><i style="background:#53c7b7"></i><span>В процессе</span><b>${inProgress}</b></div><div><i style="background:#29332b"></i><span>Не начато</span><b>${todo}</b></div>`;
+  $('#task-legend').innerHTML=`<div><i style="background:#c62f3b"></i><span>Выполнено</span><b>${done}</b></div><div><i style="background:#e46a73"></i><span>В процессе</span><b>${inProgress}</b></div><div><i style="background:#d9d9dd"></i><span>Не начато</span><b>${todo}</b></div>`;
 }
 function renderTeams() {
   $('#team-circles').innerHTML=state.teams.map(team=>{
@@ -320,8 +345,8 @@ function renderTeams() {
     const slices=contributions.map((c,i)=>{
       const start=cursor, end=cursor+ringWeights[i]/weightSum*100;
       const filledEnd=start+(end-start)*c.ratio; cursor=end;
-      return `${c.color} ${start}% ${filledEnd}%, #293329 ${filledEnd}% ${end}%`;
-    }).join(', ') || '#293329 0 100%';
+      return `${c.color} ${start}% ${filledEnd}%, #d9d9dd ${filledEnd}% ${end}%`;
+    }).join(', ') || '#d9d9dd 0 100%';
     const legend=contributions.length?contributions.map(c=>`<span class="contribution-chip" title="${safe(c.member.name)}: ${formatPoints(c.done)} из ${formatPoints(c.total)} баллов"><i style="background:${c.color}"></i>${safe(c.member.name.split(' ')[0])} <b>${formatPoints(c.done)}/${formatPoints(c.total)}</b></span>`).join(''):'<span class="muted tiny">Участников пока нет</span>';
     return `<article class="team-card" style="--team-color:${team.color}"><button class="team-card-main" data-team-details="${safe(team.id)}" title="Показать вклад участников"><div class="team-ring" style="background:conic-gradient(${slices})"><div class="team-ring-hole"><strong>${s.percent}%</strong><span>${formatPoints(s.earnedPoints)}/${formatPoints(s.assignedPoints)} б.</span></div></div><b class="team-name">${safe(team.name)}</b><span class="team-meta">${people.length} участников · ${s.tasks.length} задач</span><span class="team-points">${formatPoints(s.earnedPoints)} / ${formatPoints(s.assignedPoints)} баллов</span><div class="contribution-list">${legend}</div></button><div class="team-card-actions"><button class="small-action" data-edit="team" data-id="${safe(team.id)}" title="Изменить группу">✎</button><button class="small-action danger" data-delete="team" data-id="${safe(team.id)}" title="Удалить группу">×</button></div></article>`;
   }).join('') || '<div class="empty-state">Добавьте первую подгруппу, чтобы увидеть статистику.</div>';
@@ -379,26 +404,35 @@ function renderAccess() {
   const badge=$('#mode-pill'), stateEl=$('#access-state');
   if(remoteMode){
     badge.textContent='LIVE DATABASE'; badge.className='mode-pill live';
-    stateEl.innerHTML=currentUser?`<span class="status-dot"></span> ${safe(profile?.display_name||currentUser.email)} · ${safe(profile?.role||'viewer')}`:'<span class="status-dot public"></span> Публичный просмотр · без входа';
+    stateEl.innerHTML=currentUser?`<span class="status-dot"></span> ${safe(profile?.display_name||currentRole())} · ${safe(ROLE_LABELS[currentRole()]||currentRole())}`:'<span class="status-dot public"></span> Публичный просмотр · без входа';
     $('#login-btn').classList.toggle('hidden',!!currentUser); $('#logout-btn').classList.toggle('hidden',!currentUser);
   } else {
     badge.textContent='DEMO'; badge.className='mode-pill';
     stateEl.innerHTML='<span class="status-dot"></span> Демо-режим · только это устройство';
     $('#login-btn').classList.remove('hidden'); $('#logout-btn').classList.add('hidden');
   }
-  const editable=canManage(), admin=canAdmin();
+  const admin=canAdmin(), role=currentRole();
   ['#edit-project-btn','#edit-progress-btn','#add-team-btn'].forEach(sel=>$(sel).classList.toggle('hidden',!admin));
-  ['#add-member-btn','#add-issue-btn'].forEach(sel=>$(sel).classList.toggle('hidden',!editable));
+  $('#add-member-btn').classList.toggle('hidden',!canManageMembers());
+  $('#add-issue-btn').classList.toggle('hidden',!canManage());
   $('#add-task-btn').classList.toggle('hidden',!canCreateTask());
-  $$('#members-table [data-edit], #members-table [data-delete]').forEach(btn=>{const m=state.members.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!canManage(m?.teamId));});
+  $$('#members-table [data-edit], #members-table [data-delete]').forEach(btn=>{const m=state.members.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!canManageMembers(m?.teamId));});
   $$('#tasks-table [data-edit], #tasks-table [data-delete]').forEach(btn=>{const t=state.tasks.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!taskCanManage(t||{}));});
   $$('#open-issues [data-edit], #open-issues [data-delete], #solved-issues [data-edit], #solved-issues [data-delete]').forEach(btn=>{const i=state.issues.find(x=>x.id===btn.dataset.id);btn.classList.toggle('hidden',!canManage(i?.teamId));});
   $$('.team-card-actions').forEach(el=>el.classList.toggle('hidden',!admin));
+  // Role-specific views: visitors get a concise public overview; maintenance/design focus on work modules.
+  document.querySelector('.members-panel')?.classList.toggle('role-hidden',remoteMode && ['visitor','maintenance'].includes(role));
+  document.querySelector('.activity-panel')?.classList.toggle('role-hidden',remoteMode && role==='visitor');
+  document.querySelector('.tasks-panel')?.classList.toggle('role-hidden',remoteMode && role==='visitor');
+  document.querySelector('.task-kpi-panel')?.classList.toggle('role-hidden',remoteMode && role==='design');
+  document.querySelector('.progress-panel')?.classList.toggle('role-hidden',remoteMode && role==='maintenance');
+  document.querySelector('#page-problems')?.classList.toggle('role-hidden',remoteMode && role==='visitor');
+  document.querySelector('.page-intro #add-issue-btn')?.classList.toggle('hidden',!canManage());
 }
 
 const field=(name,label,type='text',value='',options=[])=>({name,label,type,value,options});
 function openEditor(kind,record=null) {
-  if(remoteMode && (kind==='task' ? (record?!taskCanManage(record):!canCreateTask()) : (['project','team'].includes(kind)?!canAdmin():!canManage(record?.teamId||null)))){toast('Для редактирования нужны соответствующие права доступа.',true);return;}
+  if(remoteMode && (kind==='task' ? (record?!taskCanManage(record):!canCreateTask()) : (['project','team'].includes(kind)?!canAdmin():(kind==='member'?!canManageMembers(record?.teamId||null):!canManage(record?.teamId||null))))){toast('Для редактирования нужны соответствующие права доступа.',true);return;}
   editingContext={kind,id:record?.id||null};
   $('#dialog-fields').onchange=null;
   const teamOptions=state.teams.filter(t=>canManage(t.id)).map(t=>({value:t.id,label:t.name}));
@@ -440,7 +474,7 @@ function openLogin() {
   editingContext={kind:'login',id:null};
   $('#dialog-fields').onchange=null;
   $('#dialog-title').textContent='Вход для участника'; $('#dialog-eyebrow').textContent='SUPABASE AUTH';
-  $('#dialog-fields').innerHTML='<label class="form-field"><span>Email</span><input name="email" type="email" autocomplete="username" required /></label><label class="form-field"><span>Пароль</span><input name="password" type="password" autocomplete="current-password" required /></label><p class="form-help">Учётные записи создаёт администратор проекта. Публичная регистрация отключена.</p>';
+  $('#dialog-fields').innerHTML='<label class="form-field"><span>Логин</span><input name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="visitor / owner / maintenance / design" required /></label><label class="form-field"><span>Пароль</span><input name="password" type="password" autocomplete="current-password" required /></label><p class="form-help">Доступны четыре профиля: visitor, owner, maintenance и design. Пароли выдаёт администратор проекта.</p>';
   $('#editor-dialog').showModal();
 }
 
@@ -449,7 +483,7 @@ $('#editor-form').addEventListener('submit',async e=>{
   const kind=editingContext.kind; const formData=new FormData(e.currentTarget); const values=Object.fromEntries(formData.entries());
   if(kind==='task') values.assigneeIds=formData.getAll('assigneeIds');
   if(kind==='login'){
-    try {const {error}=await supabase.auth.signInWithPassword({email:values.email,password:values.password});if(error)throw error;$('#editor-dialog').close();toast('Вы вошли в систему');}
+    try {const username=String(values.username||'').trim().toLowerCase();const email=LOGIN_EMAILS[username];if(!email)throw new Error('Неизвестный логин. Используйте visitor, owner, maintenance или design.');const {error}=await supabase.auth.signInWithPassword({email,password:values.password});if(error)throw error;$('#editor-dialog').close();toast('Вы вошли в систему');}
     catch(err){toast(err.message||'Ошибка входа',true);} return;
   }
   let item, list, action;
@@ -495,6 +529,18 @@ document.addEventListener('click',e=>{
   const team=e.target.closest('[data-team-details]');
   if(team){const t=state.teams.find(x=>x.id===team.dataset.teamDetails);const members=state.members.filter(m=>m.teamId===t.id);const stats=groupStats(t);const lines=members.map(m=>{const p=memberPointStats(m.id);return `${m.name}: ${formatPoints(p.earnedPoints)} / ${formatPoints(p.assignedPoints)} баллов`;}).join('\n');toast(`${t.name} · ${formatPoints(stats.earnedPoints)} / ${formatPoints(stats.assignedPoints)} баллов\n${lines||'В группе пока нет участников.'}`);}
 });
+
+
+// Theme preference: light is the default, dark can be toggled at any time.
+function applyTheme(theme){
+  const selected=theme==='dark'?'dark':'light';
+  document.documentElement.dataset.theme=selected;
+  const button=$('#theme-toggle');
+  if(button){button.textContent=selected==='dark'?'☀':'☾';button.title=selected==='dark'?'Включить светлую тему':'Включить тёмную тему';button.setAttribute('aria-label',button.title);}
+  try{localStorage.setItem('pcc-theme',selected);}catch{}
+}
+applyTheme((()=>{try{return localStorage.getItem('pcc-theme')||'light';}catch{return 'light';}})());
+$('#theme-toggle')?.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 
 async function init() {
   if(configured){
