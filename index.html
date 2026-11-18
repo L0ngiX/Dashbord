@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#101812" />
-  <meta name="description" content="Панель управления университетским проектом" />
-  <title>Project Control Center</title>
+  <meta name="theme-color" content="#b4232d" />
+  <meta name="description" content="Цифровой паспорт Дома-музея И. С. Тургенева на Остоженке" />
+  <title>Дом-музей И. С. Тургенева · цифровой паспорт</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,10 +14,15 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><span class="brand-mark">P</span><span>PROJECT<br><b>CONTROL CENTER</b></span></div>
-      <div class="sidebar-label">WORKSPACE</div>
-      <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span> Обзор проекта</button>
-      <button class="nav-item" data-page="problems"><span class="nav-icon">◈</span> Проблемы и решения</button>
+      <div class="brand"><span class="brand-mark">Т</span><span>ТУРГЕНЕВСКИЙ<br><b>ДОМ · ЦИФРОВОЙ ПАСПОРТ</b></span></div>
+      <div class="sidebar-label">МУЗЕЙ</div>
+      <button class="nav-item active" data-page="public"><span class="nav-icon">⌂</span> О здании</button>
+      <div class="sidebar-label role-nav-label" data-roles="owner,design,maintenance">СПЕЦИАЛЬНЫЕ РАЗДЕЛЫ</div>
+      <button class="nav-item role-nav" data-page="design" data-roles="owner,design"><span class="nav-icon">⌗</span> Архитектура и чертежи</button>
+      <button class="nav-item role-nav" data-page="maintenance" data-roles="owner,maintenance"><span class="nav-icon">⚒</span> Состояние и эксплуатация</button>
+      <div class="sidebar-label owner-nav-label" data-roles="owner">УПРАВЛЕНИЕ</div>
+      <button class="nav-item" data-page="overview" data-roles="owner"><span class="nav-icon">▦</span> Командный проект</button>
+      <button class="nav-item" data-page="problems" data-roles="owner"><span class="nav-icon">◈</span> Проектные проблемы</button>
       <div class="sidebar-bottom">
         <div class="sidebar-label">ДОСТУП</div>
         <div id="access-state" class="access-state"><span class="status-dot"></span> Демо-режим · только это устройство</div>
@@ -30,9 +35,9 @@
     <main class="main-content">
       <header class="topbar">
         <div>
-          <div class="eyebrow">UNIVERSITY PROJECT / CONTROL ROOM</div>
-          <h1 id="project-title">Project Alpha</h1>
-          <p id="project-subtitle" class="muted">Единая панель прогресса, команд и результатов</p>
+          <div class="eyebrow">ИСТОРИЧЕСКОЕ ЗДАНИЕ · МОСКВА</div>
+          <h1 id="project-title">Дом-музей И. С. Тургенева</h1>
+          <p id="project-subtitle" class="muted">Остоженка, 37/7 · цифровой паспорт здания</p>
         </div>
         <div class="top-actions">
           <span id="role-pill" class="role-context hidden"></span>
@@ -43,11 +48,71 @@
       </header>
 
       <div class="page-tabs mobile-tabs">
-        <button class="tab active" data-page="overview">Обзор</button>
-        <button class="tab" data-page="problems">Проблемы и решения</button>
+        <button class="tab active" data-page="public">О здании</button>
+        <button class="tab" data-page="design" data-roles="owner,design">Чертежи</button>
+        <button class="tab" data-page="maintenance" data-roles="owner,maintenance">Эксплуатация</button>
+        <button class="tab" data-page="overview" data-roles="owner">Проект</button>
+        <button class="tab" data-page="problems" data-roles="owner">Проблемы</button>
       </div>
 
-      <section id="page-overview" class="page active">
+      <section id="page-public" class="page active public-page">
+        <section class="museum-hero">
+          <div class="museum-hero-copy">
+            <span class="eyebrow">ДОМ-МУЗЕЙ · ОСТОЖЕНКА, 37/7</span>
+            <h2>Дом, в котором жил<br><em>Иван Сергеевич Тургенев</em></h2>
+            <p>Исторический деревянный особняк московского ампира, связанный с жизнью писателя и историей создания повести «Муму».</p>
+            <div class="hero-facts"><span>Москва, Хамовники</span><span>Первая треть XIX века</span><span>Объект культурного наследия федерального значения</span></div>
+            <a class="btn btn-primary hero-link" href="https://www.pushkinmuseum.ru/filialy/dom-muzey-i-s-turgeneva/" target="_blank" rel="noopener">Официальная страница музея ↗</a>
+          </div>
+          <div class="museum-hero-image"><img src="https://um.mos.ru/content/iblock/f0c/%D0%9C%D1%83%D0%B7%D0%B5%D0%B9%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg" alt="Главный фасад Дома-музея Тургенева на Остоженке"/><span>Главный фасад · фото: «Узнай Москву»</span></div>
+        </section>
+        <section class="museum-fact-grid">
+          <article class="museum-fact"><span class="fact-icon red">⌂</span><span class="fact-label">Адрес</span><b>Остоженка, 37/7, стр. 1</b><small>Москва, район Хамовники</small></article>
+          <article class="museum-fact"><span class="fact-icon amber">▤</span><span class="fact-label">Архитектура</span><b>Московский ампир</b><small>Деревянный особняк с шестиколонным портиком</small></article>
+          <article class="museum-fact"><span class="fact-icon blue">◷</span><span class="fact-label">Исторический период</span><b>Первая треть XIX века</b><small>Точная дата постройки в проверенных документах не установлена</small></article>
+          <article class="museum-fact"><span class="fact-icon green">✦</span><span class="fact-label">Мемориальная связь</span><b>1840–1850 годы</b><small>В доме жила мать писателя Варвара Петровна</small></article>
+        </section>
+        <section class="museum-story-grid">
+          <article class="panel museum-story"><div class="eyebrow">ИСТОРИЯ МЕСТА</div><h2>Дом, ставший частью литературной истории</h2><p>С 1840 по 1850 год особняк снимала Варвара Петровна Тургенева, мать писателя. Иван Сергеевич приезжал к ней и подолгу гостил в доме. Истории, услышанные здесь, и характеры обитателей усадьбы связаны с созданием повести «Муму».</p><p>В доме Тургенев работал над произведениями, принимал друзей и знакомых литераторов. После смерти матери в ноябре 1850 года он пробыл здесь ещё некоторое время, а затем покинул Москву.</p><div class="timeline"><div><b>1826</b><span>Дом впервые показан на архивном плане</span></div><div><b>1840–1850</b><span>Дом снимает Варвара Петровна Тургенева</span></div><div><b>2007</b><span>Здание передано Государственному музею А. С. Пушкина</span></div><div><b>2018</b><span>После реставрации открыта обновлённая экспозиция</span></div></div></article>
+          <aside class="museum-quote"><span>«</span><p>В одной из отдаленных улиц Москвы, в сером доме с белыми колоннами…</p><small>И. С. Тургенев · «Муму», 1854</small></aside>
+        </section>
+        <section class="gallery-section"><div class="section-head"><div><div class="eyebrow">ФОТОГАЛЕРЕЯ</div><h2>Дом снаружи и внутри</h2><p>Фотографии исторического фасада и музейных интерьеров.</p></div><span class="gallery-count">5 фотографий</span></div>
+          <div class="museum-gallery">
+            <figure class="gallery-wide"><img src="https://www.mos.ru/upload/newsfeed/newsfeed/Gl_Denisov%281810%29.jpg" alt="Дом-музей со стороны улицы Остоженка" loading="lazy"><figcaption>Дом на улице Остоженка · фото: mos.ru</figcaption></figure>
+            <figure><img src="https://um.mos.ru/content/iblock/432/y9sn1yfiyupjnqbw94q0ljayqulo13kr/%D0%94%D0%BE%D0%BC-%D0%BC%D1%83%D0%B7%D0%B5%D0%B9%20%D0%98.%20%D0%A1.%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.%20%D0%98%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D1%8B%20%D0%B1%D0%B5%D0%B7%20%D0%BF%D0%BE%D1%81%D0%B5%D1%82%D0%B5%D0%B9%20%283%29.JPG" alt="Интерьер музейной гостиной" loading="lazy"><figcaption>Интерьер гостиной · «Узнай Москву»</figcaption></figure>
+            <figure><img src="https://um.mos.ru/content/iblock/865/_MG_7431.jpg" alt="Комната с роялем" loading="lazy"><figcaption>Музыкальная комната · «Узнай Москву»</figcaption></figure>
+            <figure><img src="https://static.mk.ru/upload/entities/2018/11/12/articles/facebookPicture/76/d1/75/f9/366e01354efaf2ae4b5caeeef12aff20.jpg" alt="Экспозиционный интерьер с историческим платьем" loading="lazy"><figcaption>Экспозиционный зал · фото: МК</figcaption></figure>
+            <figure><img src="https://static.mk.ru/upload/entities/2018/11/12/photoreportsImages/detailPicture/8c/bd/36/29/1252969_8001581.jpg" alt="Парадный интерьер дома-музея" loading="lazy"><figcaption>Парадный зал · фото: МК</figcaption></figure>
+          </div>
+          <p class="photo-credit">Изображения размещены со ссылками на источники. Права на фотографии принадлежат их правообладателям; для публичного коммерческого использования проверьте условия лицензирования.</p>
+        </section>
+        <section class="museum-source-strip"><div><b>Материалы и исторические сведения</b><span>Государственный музей А. С. Пушкина · mos.ru · «Узнай Москву»</span></div><a href="https://www.mos.ru/news/item/105446073/" target="_blank" rel="noopener">История дома на mos.ru ↗</a></section>
+      </section>
+
+      <section id="page-design" class="page specialist-page">
+        <div class="page-intro"><div><div class="eyebrow">DESIGN STUDIO · DIGITAL BUILDING PASSPORT</div><h2>Архитектура и проектные материалы</h2><p class="muted">Подтверждённые параметры, схематические материалы и пространство для обмеров команды.</p></div><button id="add-measurement-btn" class="btn btn-primary btn-small">＋ Добавить замер</button></div>
+        <div class="design-warning"><b>Важно для проектирования:</b> схема ниже — габаритная иллюстрация, а не рабочий поэтажный чертёж. Реальная планировка помещений, отметки и узлы должны подтверждаться обмерами и проектной документацией.</div>
+        <div class="design-top-grid">
+          <article class="panel plan-panel"><div class="section-head"><div><div class="eyebrow">SCHEMATIC PLAN</div><h3>Габаритная схема основного объёма</h3></div><span class="status-tag documented">По документу 2017 г.</span></div>
+            <div class="plan-drawing"><div class="dimension dimension-top">22,0 м · подтверждённый габарит</div><svg viewBox="0 0 620 370" role="img" aria-label="Схематическая прямоугольная габаритная схема здания 22 на 19 метров"><defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#d9a3a6" stroke-width="1"/></pattern></defs><rect x="142" y="74" width="340" height="235" fill="#fbf5f4" stroke="#a92d37" stroke-width="7"/><rect x="160" y="92" width="304" height="199" fill="none" stroke="#d69a9e" stroke-dasharray="6 5" stroke-width="2"/><rect x="245" y="37" width="135" height="37" fill="url(#hatch)" stroke="#a92d37" stroke-width="2"/><g fill="#fff" stroke="#a92d37" stroke-width="3"><circle cx="250" cy="36" r="8"/><circle cx="277" cy="36" r="8"/><circle cx="304" cy="36" r="8"/><circle cx="331" cy="36" r="8"/><circle cx="358" cy="36" r="8"/><circle cx="385" cy="36" r="8"/></g><g fill="#333" font-size="14" font-weight="700" text-anchor="middle"><text x="312" y="183">ОСНОВНОЙ ОБЪЁМ</text><text x="312" y="205">схема, не поэтажный план</text><text x="312" y="332">ГЛАВНЫЙ ФАСАД · ОСТОЖЕНКА</text></g><path d="M142 55V27 M482 55V27 M142 20H482" stroke="#7c7e85" stroke-width="1.5"/><path d="M142 20l8 -5v10z M482 20l-8 -5v10z" fill="#7c7e85"/><path d="M510 74H535 M510 309H535 M528 74V309" stroke="#7c7e85" stroke-width="1.5"/><path d="M528 74l-5 8h10z M528 309l-5 -8h10z" fill="#7c7e85"/><text x="548" y="196" fill="#555" font-size="13" transform="rotate(90 548 196)" text-anchor="middle">19,0 м</text></svg><div class="plan-legend"><span><i class="legend-red"></i>Основной объём</span><span><i class="legend-hatch"></i>Портик · 6 колонн</span></div></div>
+            <p class="form-help">В акте ГИКЭ 2017 года прямоугольный план описан габаритами 22,0 × 19,0 м; указаны два ризалита и портик. Пропорции изображения условные.</p>
+          </article>
+          <article class="panel design-facts"><div class="eyebrow">DOCUMENTED CHARACTERISTICS</div><h3>Архитектурные особенности</h3><div class="feature-list"><div><b>Конструктивная схема</b><span>Деревянный дом на каменном фундаменте</span></div><div><b>Этажность</b><span>1 этаж, подвал и антресоль (не по всей проекции)</span></div><div><b>Главный фасад</b><span>Шестиколонный портик ионического ордера, треугольный фронтон</span></div><div><b>Планировка</b><span>Сохранилась парадная анфилада вдоль Остоженки; иные помещения претерпели изменения</span></div></div><div class="source-note">Источник: акт государственной историко-культурной экспертизы, 05.04.2017, стр. 20–21.</div></article>
+        </div>
+        <section class="panel measurements-panel"><div class="section-head"><div><div class="eyebrow">MEASUREMENTS REGISTER</div><h3>Обмерные данные</h3><p class="muted">Подтверждённые данные отделены от параметров, ожидающих натурного обмера.</p></div><span class="status-tag">Редактирует Design Studio</span></div><div class="responsive-table"><table><thead><tr><th>Параметр</th><th>Значение</th><th>Источник / статус</th><th>Примечание</th><th></th></tr></thead><tbody id="measurements-table"></tbody></table></div></section>
+        <section class="panel documents-panel"><div class="section-head"><div><div class="eyebrow">DRAWINGS & DOCUMENTATION</div><h3>Чертежи и документы</h3><p class="muted">Добавляйте ссылки на планы, фасады, разрезы, фотофиксацию и обмерные чертежи.</p></div><button id="add-document-btn" class="btn btn-primary btn-small">＋ Добавить материал</button></div><div id="building-documents" class="document-grid"></div></section>
+        <section class="gallery-section design-gallery"><div class="section-head"><div><div class="eyebrow">REFERENCE PHOTOGRAPHS</div><h2>Фотофиксация объекта</h2><p>Доступные внешние и интерьерные виды. Отсутствующие ракурсы нужно дознять.</p></div></div><div class="museum-gallery compact-gallery"><figure><img src="https://um.mos.ru/content/iblock/f0c/%D0%9C%D1%83%D0%B7%D0%B5%D0%B9%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.jpg" alt="Главный фасад"><figcaption>Главный фасад · фотоматериал из открытого источника</figcaption></figure><figure><img src="https://www.mos.ru/upload/newsfeed/newsfeed/Gl_Denisov%281810%29.jpg" alt="Уличный вид"><figcaption>Уличный ракурс</figcaption></figure><figure><img src="https://um.mos.ru/content/iblock/865/_MG_7431.jpg" alt="Интерьер"><figcaption>Интерьер музейного зала</figcaption></figure><figure><img src="https://um.mos.ru/content/iblock/432/y9sn1yfiyupjnqbw94q0ljayqulo13kr/%D0%94%D0%BE%D0%BC-%D0%BC%D1%83%D0%B7%D0%B5%D0%B9%20%D0%98.%20%D0%A1.%20%D0%A2%D1%83%D1%80%D0%B3%D0%B5%D0%BD%D0%B5%D0%B2%D0%B0.%20%D0%98%D0%BD%D1%82%D0%B5%D1%80%D1%8C%D0%B5%D1%80%D1%8B%20%D0%B1%D0%B5%D0%B7%20%D0%BF%D0%BE%D1%81%D0%B5%D1%82%D0%B5%D0%B9%20%283%29.JPG" alt="Музейная гостиная"><figcaption>Музейная гостиная</figcaption></figure></div></section>
+      </section>
+
+      <section id="page-maintenance" class="page specialist-page">
+        <div class="page-intro"><div><div class="eyebrow">MAINTENANCE · BUILDING CONDITION</div><h2>Состояние здания и эксплуатация</h2><p class="muted">Технические системы, конструктивные элементы и самостоятельный реестр проблем объекта.</p></div><button id="add-building-issue-btn" class="btn btn-primary btn-small">＋ Зафиксировать проблему</button></div>
+        <div class="maintenance-alert"><span class="alert-symbol">!</span><div><b>Историческая справка не является текущим обследованием</b><p>В акте 2016–2017 годов отмечались ограниченно-работоспособное состояние и аварийные участки фундаментов и конструкций портика. Это сведения на дату обследования. Текущее состояние необходимо подтвердить актуальной проверкой.</p></div></div>
+        <div class="condition-summary" id="condition-summary"></div>
+        <section class="panel systems-panel"><div class="section-head"><div><div class="eyebrow">CONDITION MONITORING</div><h3>Состояние элементов и инженерных систем</h3><p class="muted">Статусы обновляются по результатам осмотра и технического обслуживания.</p></div><button id="add-system-btn" class="btn btn-outline btn-small">＋ Добавить элемент</button></div><div id="building-systems" class="systems-grid"></div></section>
+        <section class="panel building-issues-panel"><div class="section-head"><div><div class="eyebrow">BUILDING ISSUE REGISTER</div><h3>Проблемы состояния здания</h3><p class="muted">Отдельный список неисправностей и дефектов — не привязан к проектным подгруппам.</p></div><span class="status-tag">Отдельный реестр объекта</span></div><div class="building-issue-columns"><div><div class="column-title"><span class="column-dot open"></span><h4>Открытые / в работе</h4><span id="building-open-count" class="count-pill">0</span></div><div id="building-open-issues" class="building-issue-list"></div></div><div><div class="column-title"><span class="column-dot solved"></span><h4>Устранённые</h4><span id="building-solved-count" class="count-pill">0</span></div><div id="building-solved-issues" class="building-issue-list"></div></div></div></section>
+      </section>
+
+      <section id="page-overview" class="page">
         <section class="overview-grid">
           <article class="panel task-kpi-panel">
             <div class="panel-heading"><div><div class="eyebrow">TASK ANALYTICS</div><h2>KPI рабочих задач</h2></div><span class="panel-icon">◔</span></div>
